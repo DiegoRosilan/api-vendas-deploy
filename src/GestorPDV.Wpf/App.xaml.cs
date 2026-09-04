@@ -1,8 +1,10 @@
 using System.IO;
 using System.Windows;
-using GestorPDV.Application.Common;
+using GestorPDV.Application.Seguranca;
+using GestorPDV.Data.Postgres.Repositories;
 using GestorPDV.Infrastructure.Configuration;
 using GestorPDV.Infrastructure.Database;
+using GestorPDV.Infrastructure.Security;
 using GestorPDV.Wpf.ViewModels;
 
 namespace GestorPDV.Wpf;
@@ -23,27 +25,18 @@ public partial class App : Application
         var connectionFactory = new NpgsqlConnectionFactory(databaseOptions);
         var scriptsPath = Path.Combine(AppContext.BaseDirectory, "database", "schema");
         var schemaScriptRunner = new SchemaScriptRunner(scriptsPath);
-        IDatabaseInitializer databaseInitializer = new DatabaseInitializer(connectionFactory, schemaScriptRunner);
+        var databaseInitializer = new DatabaseInitializer(connectionFactory, schemaScriptRunner);
 
-        var viewModel = new MainViewModel();
+        var passwordHasher = new BCryptPasswordHasher();
+        var usuarioRepository = new UsuarioRepository(connectionFactory);
+        IAutenticacaoService autenticacaoService = new AutenticacaoService(usuarioRepository, passwordHasher);
 
-        try
-        {
-            var status = await databaseInitializer.InicializarAsync();
-            viewModel.AplicarStatus(status);
-        }
-        catch (Exception ex)
-        {
-            viewModel.AplicarStatus(new DatabaseStatus
-            {
-                ConexaoOk = false,
-                SchemaOk = false,
-                Mensagem = $"Erro inesperado ao inicializar o banco de dados: {ex.Message}"
-            });
-        }
+        var shellViewModel = new ShellViewModel(databaseInitializer, autenticacaoService);
 
-        var mainWindow = new MainWindow { DataContext = viewModel };
+        var mainWindow = new MainWindow { DataContext = shellViewModel };
         MainWindow = mainWindow;
         mainWindow.Show();
+
+        await shellViewModel.IniciarAsync();
     }
 }

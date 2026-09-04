@@ -100,9 +100,13 @@ dotnet run --project src/GestorPDV.Wpf/GestorPDV.Wpf.csproj
 ```
 
 Ao iniciar, a aplicação valida a conexão com o PostgreSQL e cria
-automaticamente qualquer tabela que estiver faltando; o resultado dessa
-verificação aparece na tela inicial (ainda não há telas de negócio — login,
-cadastros e vendas chegam nas próximas fases).
+automaticamente qualquer tabela que estiver faltando. Com o banco OK, a
+aplicação leva para a tela de login (Fase 4); cadastros, vendas e demais
+módulos de negócio chegam nas próximas fases.
+
+Se você rodou `database/seed/seed_inicial.sql`, o primeiro acesso é
+`admin` / `admin123` — a aplicação exige a troca dessa senha no primeiro
+login (`sec_usuario.exige_troca_senha`).
 
 ## Testes
 

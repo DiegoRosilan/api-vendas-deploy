@@ -15,12 +15,19 @@ fase só avança se a anterior não tiver erro crítico pendente.
   e `Tests`. Inclui configuração externa de conexão, validação de conexão e
   de schema na inicialização, e uma janela WPF inicial que reporta o status
   dessa validação (sem telas de negócio ainda).
+- **Fase 4 — Login**: `AutenticacaoService` (`GestorPDV.Application.Seguranca`)
+  valida usuário/senha (hash BCrypt via `IPasswordHasher`), bloqueia
+  usuário inativo/bloqueado, carrega os códigos de permissão efetivos
+  (perfil + sobreposição por usuário, RN-SEG-001) em `SessaoUsuario`, e
+  implementa a troca de senha obrigatória (`exige_troca_senha`). A WPF
+  (`GestorPDV.Wpf`) ganhou um `ShellViewModel` que navega entre a tela de
+  status do banco, login, troca de senha e uma tela inicial pós-login que
+  lista as permissões do usuário autenticado — ainda sem cadastros/vendas
+  reais, que chegam nas próximas fases. Testado com dublês de repositório
+  em `GestorPDV.Tests/Seguranca/AutenticacaoServiceTests.cs` (sem
+  dependência de PostgreSQL).
 
 ## Pendentes
-
-- **Fase 4 — Login**: tela de autenticação, hash/validação de senha,
-  carregamento de permissões (`sec_usuario`, `sec_permissao`) e bloqueio de
-  ações conforme perfil.
 - **Fase 5 — Cadastros**: telas e serviços de produtos, clientes,
   fornecedores, funcionários, filiais, formas/condições de pagamento e
   tabelas de preço, sobre as tabelas já criadas na Fase 2.
@@ -64,6 +71,15 @@ referência que permitam confirmar a regra exata (ver seção 7 de
 6. Regras fiscais completas (ICMS-ST, DIFAL, IBS/CBS) exigem tabelas de
    alíquota por NCM/UF que serão carregadas via cadastro (Fase 8+), não
    fixadas em código.
+7. Senha: mínimo de 6 caracteres (`AutenticacaoService.TamanhoMinimoSenha`) —
+   sem outras regras de complexidade por ora. Trocar a senha exige informar a
+   senha atual mesmo quando `exige_troca_senha` está ativo (nunca é permitido
+   trocar às cegas), o que é mais seguro mas deve ser confirmado contra o
+   comportamento do executável de referência.
+8. Permissões: um código de permissão específico do usuário
+   (`sec_usuario_permissao`) sempre sobrepõe o valor herdado do perfil
+   (`sec_perfil_permissao`) para o mesmo código — ainda não há UI para
+   editar essas permissões (chega com os cadastros, Fase 5).
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas

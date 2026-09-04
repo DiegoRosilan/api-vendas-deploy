@@ -42,10 +42,10 @@ public class UsuarioRepository : IUsuarioRepository
         return await reader.ReadAsync(cancellationToken) ? MapUsuario(reader) : null;
     }
 
-    // Permissões efetivas do usuário: parte do perfil, com sobreposição das
-    // permissões específicas do usuário (sec_usuario_permissao), conforme
-    // RN-SEG-001 (bloqueio de ações/botões por usuário).
-    public async Task<IReadOnlyList<long>> ObterCodigosPermissaoAsync(
+    // Códigos de permissão efetivos do usuário: os do perfil, sobrepostos
+    // pelas permissões específicas do usuário (sec_usuario_permissao),
+    // conforme RN-SEG-001 (bloqueio de ações/botões por usuário).
+    public async Task<IReadOnlyList<string>> ObterCodigosPermissaoAsync(
         long usuarioId, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -58,10 +58,17 @@ public class UsuarioRepository : IUsuarioRepository
                 SELECT up.permissao_id, up.permitido, 1 AS prioridade
                 FROM sec_usuario_permissao up
                 WHERE up.usuario_id = @usuarioId
+            ),
+            efetivas AS (
+                SELECT DISTINCT ON (permissao_id) permissao_id, permitido
+                FROM permissoes
+                ORDER BY permissao_id, prioridade DESC
             )
-            SELECT DISTINCT ON (permissao_id) permissao_id, permitido
-            FROM permissoes
-            ORDER BY permissao_id, prioridade DESC
+            SELECT p.codigo
+            FROM efetivas e
+            JOIN sec_permissao p ON p.id = e.permissao_id
+            WHERE e.permitido = TRUE
+            ORDER BY p.codigo
             """;
 
         await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
@@ -69,16 +76,13 @@ public class UsuarioRepository : IUsuarioRepository
         command.Parameters.AddWithValue("usuarioId", usuarioId);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var permissoes = new List<long>();
+        var codigos = new List<string>();
         while (await reader.ReadAsync(cancellationToken))
         {
-            if (reader.GetBoolean(1))
-            {
-                permissoes.Add(reader.GetInt64(0));
-            }
+            codigos.Add(reader.GetString(0));
         }
 
-        return permissoes;
+        return codigos;
     }
 
     public async Task AtualizarUltimoAcessoAsync(
@@ -90,6 +94,23 @@ public class UsuarioRepository : IUsuarioRepository
         await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("dataAcesso", dataAcesso);
+        command.Parameters.AddWithValue("id", usuarioId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    public async Task AtualizarSenhaAsync(
+        long usuarioId, string novaSenhaHash, bool exigeTrocaSenha, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE sec_usuario
+            SET senha_hash = @senhaHash, exige_troca_senha = @exigeTrocaSenha, atualizado_em = now()
+            WHERE id = @id
+            """;
+
+        await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("senhaHash", novaSenhaHash);
+        command.Parameters.AddWithValue("exigeTrocaSenha", exigeTrocaSenha);
         command.Parameters.AddWithValue("id", usuarioId);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
