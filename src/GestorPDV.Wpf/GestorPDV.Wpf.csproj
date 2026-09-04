@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GestorPDV.Application\GestorPDV.Application.csproj" />
+    <ProjectReference Include="..\GestorPDV.Infrastructure\GestorPDV.Infrastructure.csproj" />
+    <ProjectReference Include="..\GestorPDV.Data.Postgres\GestorPDV.Data.Postgres.csproj" />
+    <ProjectReference Include="..\GestorPDV.Vendas\GestorPDV.Vendas.csproj" />
+    <ProjectReference Include="..\GestorPDV.Estoque\GestorPDV.Estoque.csproj" />
+    <ProjectReference Include="..\GestorPDV.Financeiro\GestorPDV.Financeiro.csproj" />
+    <ProjectReference Include="..\GestorPDV.Caixa\GestorPDV.Caixa.csproj" />
+    <ProjectReference Include="..\GestorPDV.Fiscal\GestorPDV.Fiscal.csproj" />
+    <ProjectReference Include="..\GestorPDV.Relatorios\GestorPDV.Relatorios.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- Scripts de banco copiados para junto do executável, para o
+         DatabaseInitializer conseguir localizá-los e criar o schema que
+         estiver faltando (item 3 do escopo). -->
+    <Content Include="..\..\database\schema\**\*.sql">
+      <Link>database\schema\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

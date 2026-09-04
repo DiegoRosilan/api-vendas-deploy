@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GestorPDV.Domain\GestorPDV.Domain.csproj" />
+    <ProjectReference Include="..\GestorPDV.Application\GestorPDV.Application.csproj" />
+    <ProjectReference Include="..\GestorPDV.Infrastructure\GestorPDV.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

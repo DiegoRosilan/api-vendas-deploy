@@ -1,12 +1,22 @@
-.idea/
+# Visual Studio / .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
 .vscode/
-node_modules/
-build/
-temp/
-.env
-coverage
-ormconfig.json
-dist
+.idea/
 
-uploads/*
-!uploads/.gitkeep
+# Publicação (Fase 11)
+publish/
+*.pubxml
+*.pubxml.user
+
+# Configuração local com segredos — nunca versionar
+appsettings.*.Local.json
+appsettings.Development.json
+*.pfx
+
+# Logs e temporários
+*.log
+temp/

@@ -1,0 +1,150 @@
+# GestorPDV
+
+ERP/PDV completo para varejo em geral, oficina mecânica, supermercado,
+farmácia, armarinho, bar/restaurante, loja de roupas, indústria e segmentos
+similares — C#, .NET 9, WPF e PostgreSQL.
+
+Este repositório está na **Fase 3** do desenvolvimento (de 11 fases — ver
+`docs/ROADMAP.md`): análise/arquitetura, banco de dados e estrutura do
+projeto concluídas. Login, cadastros, vendas, pagamentos, relatórios,
+impressão, testes e publicação são implementados nas próximas fases.
+
+## Documentação
+
+- `docs/ARQUITETURA.md` — arquitetura em camadas, tecnologia e mapa de módulos.
+- `docs/ROADMAP.md` — status de cada fase e suposições registradas.
+- `database/README.md` — estrutura do banco e como criar o schema.
+
+## Tecnologia
+
+C# · .NET 9 (WPF) · PostgreSQL · Npgsql (SQL parametrizado, sem ORM) ·
+FastReport (a partir da Fase 8).
+
+## Pré-requisitos
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- Visual Studio 2022 (17.12+) com a carga de trabalho **.NET desktop
+  development** (necessária para compilar `GestorPDV.Wpf`, que só compila em
+  Windows) — ou `dotnet build`/`dotnet test` pela linha de comando para os
+  demais projetos, que são multiplataforma.
+- PostgreSQL 14+ acessível pela rede (local ou remoto).
+
+## Configurando o PostgreSQL
+
+```bash
+# 1. Criar o banco
+psql -h <host> -U <usuario> -d postgres -c "CREATE DATABASE gestordb;"
+
+# 2. Criar o schema (todas as tabelas)
+psql -h <host> -U <usuario> -d gestordb -f database/schema/run.sql
+
+# 3. Carregar dados iniciais (filial, usuário admin, formas de pagamento, etc.)
+psql -h <host> -U <usuario> -d gestordb -f database/seed/seed_inicial.sql
+```
+
+Veja `database/README.md` para detalhes de cada script e a convenção de
+nomes das tabelas. A aplicação também tenta criar o schema automaticamente
+na inicialização (`GestorPDV.Infrastructure.Database.DatabaseInitializer`),
+então os passos 2/3 acima são um atalho, não uma etapa obrigatória separada
+— mas rodá-los manualmente antes do primeiro build é recomendado para
+confirmar que a conexão e as credenciais estão corretas.
+
+## Configurando a conexão da aplicação
+
+Edite `src/GestorPDV.Wpf/appsettings.json`:
+
+```json
+{
+  "Database": {
+    "Host": "localhost",
+    "Port": 5432,
+    "Database": "gestordb",
+    "Username": "postgres",
+    "Password": "",
+    "TimeoutSegundos": 15
+  }
+}
+```
+
+Em vez de colocar a senha no `appsettings.json` (não recomendado fora de
+desenvolvimento local), defina a variável de ambiente
+`GESTORPDV_Database__Password` (ou crie um `appsettings.Local.json`, que já
+está no `.gitignore`) — a aplicação lê configuração externa com precedência
+`appsettings.json` → `appsettings.{Environment}.json` → variáveis de
+ambiente `GESTORPDV_*`.
+
+## Compilando
+
+```bash
+# Todos os projetos multiplataforma (não inclui GestorPDV.Wpf fora do Windows)
+dotnet restore GestorPDV.sln
+dotnet build GestorPDV.sln -c Release
+
+# No Windows, com Visual Studio ou dotnet CLI, compila também a interface WPF:
+dotnet build src/GestorPDV.Wpf/GestorPDV.Wpf.csproj -c Release
+```
+
+> **Nota sobre este ambiente de desenvolvimento**: o código foi escrito e
+> revisado manualmente (sintaxe, referências entre projetos, GUIDs da
+> solução), mas não pôde ser compilado neste ambiente porque não foi
+> possível instalar o .NET SDK aqui (rede restrita, sem acesso aos
+> instaladores oficiais). A primeira execução de `dotnet build` em uma
+> máquina com o SDK deve ser tratada como parte da **Fase 10 (testes)**:
+> qualquer erro de compilação encontrado deve ser corrigido antes de seguir
+> para as próximas fases.
+
+## Executando
+
+```bash
+dotnet run --project src/GestorPDV.Wpf/GestorPDV.Wpf.csproj
+```
+
+Ao iniciar, a aplicação valida a conexão com o PostgreSQL e cria
+automaticamente qualquer tabela que estiver faltando; o resultado dessa
+verificação aparece na tela inicial (ainda não há telas de negócio — login,
+cadastros e vendas chegam nas próximas fases).
+
+## Testes
+
+```bash
+dotnet test src/GestorPDV.Tests/GestorPDV.Tests.csproj
+```
+
+## Publicando (Fase 11)
+
+Instruções detalhadas de publicação (self-contained x framework-dependent,
+gerar o instalador) serão adicionadas quando a Fase 11 for implementada.
+Como referência inicial, o comando padrão do .NET para gerar um executável
+autocontido no Windows é:
+
+```bash
+dotnet publish src/GestorPDV.Wpf/GestorPDV.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+```
+
+## Estrutura da solução
+
+```
+GestorPDV.sln
+src/
+  GestorPDV.Domain           entidades e enums, sem dependências externas
+  GestorPDV.Application      interfaces (portas) e DTOs
+  GestorPDV.Infrastructure   configuração, segurança, inicialização de banco
+  GestorPDV.Data.Postgres    repositórios Npgsql (SQL parametrizado)
+  GestorPDV.Vendas           motor de vendas/orçamento/pedido (Fase 6)
+  GestorPDV.Estoque          movimentação e saldos de estoque (Fase 6)
+  GestorPDV.Financeiro       contas a receber/pagar, renegociação (Fase 7)
+  GestorPDV.Caixa            abertura/fechamento de caixa (Fase 7)
+  GestorPDV.Fiscal           motor tributário (Fases 6/8)
+  GestorPDV.Relatorios       integração FastReport (Fase 8)
+  GestorPDV.Wpf              interface (MVVM) — composition root
+  GestorPDV.Tests            testes de regras de negócio (xUnit)
+database/
+  schema/                    DDL PostgreSQL, idempotente, banco gestordb
+  seed/                      dados iniciais mínimos
+docs/
+  ARQUITETURA.md             Fase 1: análise e arquitetura
+  ROADMAP.md                 status das fases e suposições registradas
+```
+
+Ver `docs/ARQUITETURA.md` para o detalhamento da arquitetura em camadas e o
+mapeamento de cada módulo de negócio para seu projeto correspondente.

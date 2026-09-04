@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\GestorPDV.Domain\GestorPDV.Domain.csproj" />
+    <ProjectReference Include="..\GestorPDV.Application\GestorPDV.Application.csproj" />
+  </ItemGroup>
+
+</Project>
