@@ -18,7 +18,13 @@ namespace GestorPDV.Wpf;
 // implementações concretas de Infrastructure/Data.Postgres — as telas e
 // ViewModels só dependem de abstrações da camada Application (item 7 do
 // escopo: regras/infraestrutura fora dos formulários).
-public partial class App : Application
+//
+// "Application" precisa ser qualificado como System.Windows.Application:
+// como o projeto de camada de aplicação se chama GestorPDV.Application, o
+// nome simples "Application" resolve para esse namespace (irmão de
+// GestorPDV.Wpf sob o namespace GestorPDV) em vez da classe base do WPF —
+// mesma causa raiz da colisão de GestorPDV.Domain.Caixa.Caixa.
+public partial class App : System.Windows.Application
 {
     protected override async void OnStartup(StartupEventArgs e)
     {

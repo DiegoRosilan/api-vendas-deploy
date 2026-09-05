@@ -6,7 +6,7 @@ using Xunit;
 
 namespace GestorPDV.Tests.Financeiro;
 
-file class UnitOfWorkFake : IUnitOfWork
+class UnitOfWorkFake : IUnitOfWork
 {
     public Task BeginAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -14,14 +14,14 @@ file class UnitOfWorkFake : IUnitOfWork
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
 
-file class UnitOfWorkFactoryFake : IUnitOfWorkFactory
+class UnitOfWorkFactoryFake : IUnitOfWorkFactory
 {
     public IUnitOfWork Criar() => new UnitOfWorkFake();
 }
 
 // Dublê em memória com o mínimo necessário para exercitar FinanceiroService
 // sem depender de PostgreSQL (mesma abordagem de AutenticacaoServiceTests).
-file class FinanceiroRepositoryFake : IFinanceiroRepository
+class FinanceiroRepositoryFake : IFinanceiroRepository
 {
     private long _proximoIdBaixa = 1;
 

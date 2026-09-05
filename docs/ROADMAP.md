@@ -3,6 +3,16 @@
 Controle de progresso do desenvolvimento em etapas (item 11 do escopo). Cada
 fase só avança se a anterior não tiver erro crítico pendente.
 
+**Nota (a partir da Fase 8)**: o ambiente de desenvolvimento passou a ter o
+SDK do .NET disponível, permitindo `dotnet build`/`dotnet test` reais para
+os 10 projetos que não são WPF e para `GestorPDV.Tests` (ver
+`docs/ARQUITETURA.md`, seção 9, para o detalhamento e os dois bugs que essa
+primeira compilação real encontrou e corrigiu nas Fases 4 e 7). A partir de
+agora, cada fase inclui build/testes reais dessas camadas antes de ser
+marcada como concluída; `GestorPDV.Wpf` continua exigindo Windows para a
+etapa final de compilação de XAML (limitação da própria ferramenta WPF, não
+do código).
+
 ## Concluídas
 
 - **Fase 1 — Análise e arquitetura**: `docs/ARQUITETURA.md`.

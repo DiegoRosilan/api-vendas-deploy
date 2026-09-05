@@ -7,7 +7,7 @@ namespace GestorPDV.Tests.Seguranca;
 // Dublês de teste simples (sem banco/hash real) para exercitar as regras de
 // RN-SEG-001 isoladamente: usuário inativo/bloqueado, senha incorreta,
 // permissões efetivas e troca de senha.
-file class UsuarioRepositoryFake : IUsuarioRepository
+class UsuarioRepositoryFake : IUsuarioRepository
 {
     public readonly Dictionary<string, Usuario> UsuariosPorLogin = new(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<long, List<string>> PermissoesPorUsuario = new();
@@ -42,7 +42,7 @@ file class UsuarioRepositoryFake : IUsuarioRepository
     }
 }
 
-file class PasswordHasherFake : IPasswordHasher
+class PasswordHasherFake : IPasswordHasher
 {
     public string Hash(string senha) => $"HASH:{senha}";
 

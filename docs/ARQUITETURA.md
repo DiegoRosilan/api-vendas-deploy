@@ -162,12 +162,41 @@ de decisões/suposições tomadas ao longo do desenvolvimento.
 
 ## 9. Limitação conhecida deste ambiente
 
-Este ambiente de desenvolvimento (sandbox Linux sem acesso ao instalador do
-.NET SDK) não conseguiu instalar o SDK do .NET 9/10 para compilar e validar o
-projeto localmente (rede bloqueada para os hosts de download do SDK e para os
-repositórios `dotnet-sdk-*` do `apt`). O código foi escrito com o máximo de
-cuidado para compilar, mas a compilação real (`dotnet build`), obrigatória
-pelo item 10 do escopo, precisa ser feita no Visual Studio/uma máquina com o
-.NET 9 SDK instalado — o que também é necessário para o projeto WPF, já que
-WPF só compila em Windows. Qualquer erro de compilação encontrado deve ser
-reportado para correção na fase de testes (Fase 10).
+A partir da Fase 8, este ambiente passou a ter acesso ao SDK do .NET (10.0,
+instalado via `apt`) e a rede liberada para o NuGet, o que permitiu compilar
+e testar de verdade os 10 projetos que não são WPF (`Domain`, `Application`,
+`Infrastructure`, `Data.Postgres`, `Vendas`, `Estoque`, `Financeiro`,
+`Caixa`, `Fiscal`, `Relatorios`) e o projeto de testes (`dotnet build` +
+`dotnet test`, 0 erros/0 avisos, todos os testes passando) — antes disso,
+a validação era só manual (XML bem-formado, balanceamento de chaves,
+conferência cruzada de assinaturas). Essa primeira compilação real já
+encontrou e corrigiu dois bugs que a validação manual não pegou:
+
+1. Um `class App : Application` em `GestorPDV.Wpf/App.xaml.cs` que não
+   compilava: como o projeto de camada de aplicação se chama
+   `GestorPDV.Application`, o nome simples `Application` resolvia para esse
+   namespace (irmão de `GestorPDV.Wpf` sob o namespace comum `GestorPDV`) em
+   vez da classe base do WPF — a mesma causa raiz da colisão de
+   `GestorPDV.Domain.Caixa.Caixa` documentada no `ROADMAP.md` (Fase 7).
+   Corrigido qualificando como `System.Windows.Application`.
+2. As classes-dublê de teste (`UsuarioRepositoryFake`,
+   `FinanceiroRepositoryFake` etc.) declaradas como `file class` não podiam
+   aparecer em assinaturas de métodos de uma classe de teste que não fosse
+   também `file`-scoped (erro `CS0118`/`CS9051`) — corrigido removendo o
+   modificador `file`.
+
+O projeto `GestorPDV.Wpf` compila normalmente até a etapa de XAML→BAML: o
+código C# (ViewModels, code-behind, composition root) compila sem erros,
+mas o passo de compilação de marcação (`MarkupCompilePass1/2`) falha com
+erros de resolução de tipo local (`MC3050`/`MC3074`) mesmo usando
+`-p:EnableWindowsTargeting=true` — uma limitação conhecida e documentada do
+próprio `dotnet/wpf` ao tentar compilar XAML fora do Windows (o assembly
+temporário usado para resolver tipos locais durante a geração do BAML tem
+nome aleatório nessa plataforma). Isso não é um erro do código: os dois
+tipos apontados pelo compilador (`DbStatusViewModel`,
+`BoolParaVisibilidadeConverter`) existem, são públicos e estão no namespace
+correto referenciado pelo XAML. A compilação final do `GestorPDV.Wpf`
+(incluindo BAML) continua exigindo Visual Studio/uma máquina Windows com o
+.NET 9 SDK — mas agora com muito mais confiança, já que todo o código C#
+por trás das telas (inclusive o composition root em `App.xaml.cs`) já foi
+compilado com sucesso neste ambiente.
