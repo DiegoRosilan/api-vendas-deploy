@@ -28,10 +28,13 @@ public abstract class CadastroViewModelBase : ObservableObject
 
     public ICommand VoltarCommand { get; }
 
-    protected CadastroViewModelBase(SessaoUsuario sessao, ShellViewModel shell)
+    // Por padrão "Voltar" leva ao menu de cadastros; telas que reaproveitam
+    // esta base fora do menu de cadastros (ex.: VendaViewModel) podem
+    // informar outro destino.
+    protected CadastroViewModelBase(SessaoUsuario sessao, ShellViewModel shell, Action? voltar = null)
     {
         Sessao = sessao;
         Shell = shell;
-        VoltarCommand = new RelayCommand(() => Shell.NavigateToCadastrosMenu(Sessao));
+        VoltarCommand = new RelayCommand(voltar ?? (() => Shell.NavigateToCadastrosMenu(Sessao)));
     }
 }

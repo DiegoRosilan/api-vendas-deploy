@@ -37,14 +37,21 @@ fase só avança se a anterior não tiver erro crítico pendente.
   edição. Não há exclusão física em nenhum cadastro — desativar é editar o
   registro e desmarcar "Ativo", preservando o histórico de vendas/movimentos
   que referenciam esses registros.
+- **Fase 6 — Vendas**: `CalculoVenda` (`GestorPDV.Vendas.Calculos`) implementa
+  `CalculaItemTotal`/`CalculaSubTotal`/`CalculaTotal`/limite de desconto
+  como funções puras, testadas sem banco em
+  `GestorPDV.Tests/Vendas/CalculoVendaTests.cs`. `VendaService`
+  (`GestorPDV.Vendas.Servicos`) orquestra iniciar venda, adicionar/remover
+  item (produto ou serviço), resolver preço pela tabela do cliente,
+  finalizar (grava mv_venda + itens + um pagamento único, baixa o estoque
+  via `EstoqueService` e lança a comissão do vendedor — tudo numa
+  transação via o novo `IUnitOfWorkFactory`) e cancelar (estorna o estoque
+  lançando o movimento inverso, nunca apagando o original). Tela "Venda"
+  no Home (permissão `VENDA_INCLUIR`) com busca de produto/serviço,
+  carrinho, totais ao vivo, forma de pagamento e uma lista de vendas do
+  dia com cancelamento (permissão `VENDA_CANCELAR`).
 
 ## Pendentes
-- **Fase 6 — Vendas**: fluxo completo de inclusão de item, cálculo de
-  subtotal/total/desconto/acréscimo, promoção/tabela de preço, baixa de
-  estoque, pré-venda/orçamento/pedido, devolução e cancelamento
-  (rotinas `CalculaItemTotal`, `CalculaSubTotal`, `CalculaTotal`,
-  `CalculaDesconto`, `CalculaAcrescimo`, `CalculaPrecoVenda`,
-  `BaixarEstoque`, `CancelarVenda`, `Estornar`).
 - **Fase 7 — Pagamentos**: múltiplas formas de pagamento por venda,
   parcelamento, dados de cartão/Pix, juros/multa/renegociação, caixa
   (`FinalizaFormaPagamento`, `CalculaPagamentos`, `Renegocia`).
@@ -65,20 +72,29 @@ por não haver, ainda, SQL exata, prints ou mensagens de erro do executável de
 referência que permitam confirmar a regra exata (ver seção 7 de
 `Especificacao_Regras_Negocio_GestorPDV`):
 
-1. Arredondamento monetário: 2 casas decimais, `MidpointRounding.AwayFromZero`.
-2. Autorização de desconto acima do limite: será modelada como permissão de
-   usuário (`sec_permissao` = `AUTORIZAR_DESCONTO`) na Fase 6.
-3. Momento da baixa de estoque: na finalização da venda (não na inclusão do
-   item), com possibilidade de baixa em tempo real configurável por parâmetro
-   (`BaixarEstoqueRealTime`), a implementar na Fase 6.
-4. Prioridade de preço: preço manual > promoção vigente > tabela de preço da
-   filial > preço de tabela padrão do produto — a confirmar na Fase 6.
-5. Bloqueio de cliente inadimplente: comparação de dias de atraso da parcela
-   mais antiga em aberto contra `bloquear_venda_dias_vencido`, a implementar
-   na Fase 5/6.
-6. Regras fiscais completas (ICMS-ST, DIFAL, IBS/CBS) exigem tabelas de
-   alíquota por NCM/UF que serão carregadas via cadastro (Fase 8+), não
-   fixadas em código.
+1. Arredondamento monetário: 2 casas decimais, `MidpointRounding.AwayFromZero`
+   — aplicado em `CalculoVenda` (Fase 6).
+2. Autorização de desconto acima do limite: implementada como a permissão
+   `VENDA_AUTORIZAR_DESCONTO` (`CalculoVenda.ValidarDesconto`, RN-VEN-005).
+3. Momento da baixa de estoque: implementado na finalização da venda (não na
+   inclusão do item). `BaixarEstoqueRealTime` (baixa item a item, antes de
+   finalizar) não foi implementado — avaliar se é necessário quando houver
+   caso de uso concreto que exija reservar estoque durante a montagem do
+   carrinho.
+4. Prioridade de preço (RN-VEN-006/007/008): implementado apenas
+   "preço da tabela do cliente, senão preço padrão do produto"
+   (`VendaService.ResolverPrecoAsync`). Promoção (RN-VEN-007) e preço manual
+   editável no carrinho ainda não existem — dependem de um cadastro de
+   promoções (`est_promocao`), que não foi construído.
+5. Bloqueio de cliente inadimplente (RN-CLI-001,
+   `bloquear_venda_dias_vencido`): ainda não implementado — só se aplica
+   quando houver venda a prazo/parcelada, que é escopo da Fase 7.
+6. Regras fiscais completas (ICMS-ST, DIFAL, IBS/CBS, e mesmo o ICMS normal)
+   não são calculadas na Fase 6: os campos fiscais de `mv_venda_produto`
+   ficam em zero. Calcular impostos exige o motor tributário
+   (`GestorPDV.Fiscal`), que ainda não foi implementado — nenhuma fase do
+   escopo original (doc "Desenvolvimento de sistema completo") reserva uma
+   fase dedicada a isso; entra como trabalho futuro quando solicitado.
 7. Senha: mínimo de 6 caracteres (`AutenticacaoService.TamanhoMinimoSenha`) —
    sem outras regras de complexidade por ora. Trocar a senha exige informar a
    senha atual mesmo quando `exige_troca_senha` está ativo (nunca é permitido
@@ -90,15 +106,30 @@ referência que permitam confirmar a regra exata (ver seção 7 de
    editar perfis/permissões em si (só o uso delas para liberar/bloquear
    botões) — avaliar se entra numa fase futura ou fica como manutenção
    direta no banco.
-9. Tabela de preço: a Fase 5 cadastra só o cabeçalho
-   (`cad_tabela_preco`); a associação produto → preço
-   (`cad_tabela_preco_item`) já tem repositório (`ITabelaPrecoRepository`)
-   mas ganha tela própria na Fase 6, junto da resolução de preço/promoção
-   da venda.
+9. Tabela de preço: só o cabeçalho (`cad_tabela_preco`) tem tela de cadastro
+   (Fase 5). A associação produto → preço (`cad_tabela_preco_item`) tem
+   repositório completo (`ITabelaPrecoRepository`) e já é usada por
+   `VendaService.ResolverPrecoAsync` na Fase 6, mas ainda não tem tela para
+   o operador montar a tabela (adicionar/remover produtos e preços) — por
+   ora isso só pode ser feito escrevendo direto na tabela.
 10. Funcionário: o campo "usuário do sistema" (`cad_funcionario.usuario_id`)
     ainda não tem seletor na tela (não há listagem de usuários exposta por
     `IUsuarioRepository` hoje) — associar um funcionário a um login deve
-    ser feito diretamente no banco até essa tela existir.
+    ser feito diretamente no banco até essa tela existir. O seed
+    (`seed_inicial.sql`) já cria esse vínculo para o usuário `admin`, para
+    a tela de Venda (Fase 6) funcionar sem esse passo manual.
+11. Número da venda: gerado com `LOCK TABLE mv_venda IN SHARE ROW EXCLUSIVE
+    MODE` dentro da transação de finalização, para evitar número duplicado
+    por filial. Funciona bem para o volume esperado de um comércio
+    pequeno/médio; se a concorrência de finalizações simultâneas crescer
+    muito, trocar por uma sequência dedicada por filial.
+12. Comissão (RN-COM-001): só a comissão padrão do vendedor
+    (`cad_funcionario.comissao_padrao_pct`) sobre o total da venda. Regras
+    de comissão de gerente sobre a equipe, faixas de comissão por
+    valor/produto, etc. não foram implementadas.
+13. Carrinho de venda: um único vendedor por venda, resolvido a partir do
+    funcionário vinculado ao usuário logado — se não houver vínculo, a
+    tela de Venda mostra aviso e não deixa iniciar.
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas

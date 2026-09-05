@@ -48,6 +48,29 @@ INSERT INTO est_local_estoque (filial_id, descricao)
 SELECT f.id, 'Estoque Principal' FROM cad_filial f WHERE f.codigo = '1'
 ON CONFLICT DO NOTHING;
 
+-- Funcionário vendedor vinculado ao usuário admin, para a tela de Vendas
+-- (Fase 6) funcionar de imediato — sem isso, IVendaService não consegue
+-- resolver o vendedor a partir do usuário logado. cad_pessoa não tem uma
+-- chave natural aqui (cpf_cnpj fica nulo), então a idempotência é feita
+-- checando se já existe um funcionário ligado ao login 'admin', em vez de
+-- usar ON CONFLICT.
+WITH nova_pessoa AS (
+    INSERT INTO cad_pessoa (tipo_pessoa, nome, ativo)
+    SELECT 'F', 'Administrador', TRUE
+    WHERE NOT EXISTS (
+        SELECT 1 FROM cad_funcionario fu
+        JOIN sec_usuario u ON u.id = fu.usuario_id
+        WHERE u.login = 'admin'
+    )
+    RETURNING id
+)
+INSERT INTO cad_funcionario (id, filial_id, usuario_id, cargo, comissao_padrao_pct, eh_gerente)
+SELECT np.id, f.id, u.id, 'Gerente', 0, TRUE
+FROM nova_pessoa np
+CROSS JOIN cad_filial f
+CROSS JOIN sec_usuario u
+WHERE f.codigo = '1' AND u.login = 'admin';
+
 INSERT INTO cad_forma_pagamento (codigo, descricao, tipo, permite_parcelamento, gera_financeiro, movimenta_caixa) VALUES
     ('DIN',  'Dinheiro',           'dinheiro',       FALSE, FALSE, TRUE),
     ('CRED', 'Cartão de Crédito',  'cartao_credito', TRUE,  TRUE,  TRUE),
@@ -129,3 +152,25 @@ INSERT INTO dre_grupo (codigo, descricao, tipo) VALUES
     ('DESPESA_OP',    'Despesas operacionais',    'despesa'),
     ('IMPOSTO_VENDA', 'Impostos sobre vendas',    'imposto')
 ON CONFLICT (codigo) DO NOTHING;
+
+-- Dois produtos de exemplo com saldo em estoque, só para a tela de Vendas
+-- (Fase 6) ter o que buscar/vender logo após o setup inicial.
+INSERT INTO cad_produto (codigo, codigo_barras, descricao, unidade, preco_custo, preco_venda, estoque_minimo, controla_estoque, ativo) VALUES
+    ('0001', '7891000000001', 'Produto de exemplo A', 'UN', 5.00, 10.00, 5, TRUE, TRUE),
+    ('0002', '7891000000002', 'Produto de exemplo B', 'UN', 15.00, 25.00, 5, TRUE, TRUE)
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Sem ON CONFLICT: o UNIQUE de est_estoque inclui colunas anuláveis
+-- (produto_grade_id/produto_lote_id) e o Postgres não trata NULLs como
+-- iguais para fins de conflito — usar WHERE NOT EXISTS evita duplicar o
+-- saldo se o seed for executado mais de uma vez.
+INSERT INTO est_estoque (produto_id, local_estoque_id, quantidade)
+SELECT p.id, l.id, 100
+FROM cad_produto p
+CROSS JOIN est_local_estoque l
+WHERE p.codigo IN ('0001', '0002') AND l.descricao = 'Estoque Principal'
+    AND NOT EXISTS (
+        SELECT 1 FROM est_estoque e
+        WHERE e.produto_id = p.id AND e.local_estoque_id = l.id
+            AND e.produto_grade_id IS NULL AND e.produto_lote_id IS NULL
+    );

@@ -1,0 +1,162 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Vendas.VendaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Venda" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <Button Grid.Column="1" Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.6*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Border Padding="16" CornerRadius="6" Background="White" BorderBrush="#E5E7EB" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Buscar produto (código, código de barras ou descrição)"
+                                       Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Buscar" Command="{Binding BuscarProdutoCommand}"
+                                        Padding="10,4" Margin="8,0,0,0" />
+                                <TextBox Text="{Binding TermoBusca, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+
+                            <DataGrid Height="140" Margin="0,8,0,0" ItemsSource="{Binding ResultadosBusca}"
+                                      SelectedItem="{Binding ProdutoSelecionado}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="90" />
+                                    <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" />
+                                    <DataGridTextColumn Header="Preço" Binding="{Binding PrecoVenda, StringFormat={}{0:N2}}" Width="90" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Quantidade" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding Quantidade, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Desconto (%)" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding DescontoPct, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <Button Grid.Column="4" Content="Adicionar produto ao carrinho" Style="{StaticResource BotaoPrimario}"
+                                        Command="{Binding AdicionarProdutoCommand}" VerticalAlignment="Bottom" HorizontalAlignment="Left" />
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding Servicos}" DisplayMemberPath="Descricao"
+                                          SelectedItem="{Binding ServicoSelecionado}" />
+                                <Button Grid.Column="2" Content="Adicionar serviço" Command="{Binding AdicionarServicoCommand}" Padding="10,4" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,16,0,0" Padding="16" CornerRadius="6" Background="White"
+                            BorderBrush="#E5E7EB" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Carrinho" FontWeight="Bold" Foreground="#1F2937" Margin="0,0,0,8" />
+                            <DataGrid Height="180" ItemsSource="{Binding Itens}" SelectedItem="{Binding ItemCarrinhoSelecionado}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Item" Binding="{Binding ItemNumero}" Width="45" />
+                                    <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" />
+                                    <DataGridTextColumn Header="Qtd" Binding="{Binding Quantidade}" Width="60" />
+                                    <DataGridTextColumn Header="Valor unit." Binding="{Binding ValorUnitario, StringFormat={}{0:N2}}" Width="90" />
+                                    <DataGridTextColumn Header="Desconto" Binding="{Binding Desconto, StringFormat={}{0:N2}}" Width="90" />
+                                    <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="90" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Button Content="Remover item selecionado" Command="{Binding RemoverItemCommand}"
+                                    Margin="0,8,0,0" Padding="10,4" HorizontalAlignment="Left" />
+
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Subtotal" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding Subtotal, StringFormat={}{0:C}}" FontSize="16" FontWeight="Bold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Desconto" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding DescontoTotal, StringFormat={}{0:C}}" FontSize="16" FontWeight="Bold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Total" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding Total, StringFormat={}{0:C}}" FontSize="20" FontWeight="Bold" Foreground="#2563EB" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Cliente (opcional)" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <ComboBox ItemsSource="{Binding Clientes}" DisplayMemberPath="Pessoa.Nome"
+                                              SelectedItem="{Binding ClienteSelecionado}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Forma de pagamento" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <ComboBox ItemsSource="{Binding FormasPagamento}" DisplayMemberPath="Descricao"
+                                              SelectedItem="{Binding FormaPagamentoSelecionada}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Button Content="Finalizar venda" Style="{StaticResource BotaoPrimario}"
+                                    Command="{Binding FinalizarCommand}" Margin="0,16,0,0" Padding="14,10" FontSize="14" />
+
+                            <TextBlock Text="{Binding Mensagem}" TextWrapping="Wrap" Foreground="#2563EB" Margin="0,12,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1" VerticalAlignment="Stretch">
+                <StackPanel>
+                    <TextBlock Text="Vendas de hoje" FontWeight="Bold" Foreground="#1F2937" Margin="0,0,0,8" />
+                    <DataGrid ItemsSource="{Binding VendasDeHoje}" SelectedItem="{Binding VendaHistoricoSelecionada}" Height="400">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nº" Binding="{Binding Numero}" Width="45" />
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80" />
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Button Content="Cancelar venda selecionada" Command="{Binding CancelarVendaSelecionadaCommand}"
+                            Margin="0,8,0,0" Padding="10,4"
+                            Visibility="{Binding PodeCancelarVenda, Converter={StaticResource BoolParaVisibilidade}}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

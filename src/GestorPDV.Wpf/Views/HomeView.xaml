@@ -24,6 +24,9 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Content="Nova venda" Command="{Binding AbrirVendaCommand}"
+                        Style="{StaticResource BotaoPrimario}" Margin="0,0,8,0"
+                        Visibility="{Binding PodeVender, Converter={StaticResource BoolParaVisibilidade}}" />
                 <Button Content="Cadastros" Command="{Binding AbrirCadastrosCommand}"
                         Padding="12,6" Margin="0,0,8,0"
                         Visibility="{Binding PodeGerenciarCadastros, Converter={StaticResource BoolParaVisibilidade}}" />
@@ -42,6 +45,6 @@
 
         <TextBlock Grid.Row="2" Margin="0,24,0,0" VerticalAlignment="Bottom"
                    Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap"
-                   Text="Fase 5 concluída: cadastros de produtos, serviços, clientes, fornecedores, funcionários, filiais, formas/condições de pagamento e tabelas de preço. Vendas, pagamentos, relatórios e impressão chegam nas próximas fases." />
+                   Text="Fase 6 concluída: venda com cálculo de item/desconto, resolução de preço por tabela, baixa de estoque, comissão e cancelamento com estorno. Pagamentos completos (parcelamento, juros/multa), relatórios e impressão chegam nas próximas fases." />
     </Grid>
 </UserControl>

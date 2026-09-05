@@ -4,10 +4,11 @@ ERP/PDV completo para varejo em geral, oficina mecânica, supermercado,
 farmácia, armarinho, bar/restaurante, loja de roupas, indústria e segmentos
 similares — C#, .NET 9, WPF e PostgreSQL.
 
-Este repositório está na **Fase 3** do desenvolvimento (de 11 fases — ver
-`docs/ROADMAP.md`): análise/arquitetura, banco de dados e estrutura do
-projeto concluídas. Login, cadastros, vendas, pagamentos, relatórios,
-impressão, testes e publicação são implementados nas próximas fases.
+Este repositório está na **Fase 6** do desenvolvimento (de 11 fases — ver
+`docs/ROADMAP.md`): análise/arquitetura, banco de dados, estrutura do
+projeto, login, cadastros e vendas concluídos. Pagamentos completos
+(parcelamento, juros/multa, caixa), relatórios, impressão, testes de
+compilação real e publicação são implementados nas próximas fases.
 
 ## Documentação
 
@@ -101,12 +102,14 @@ dotnet run --project src/GestorPDV.Wpf/GestorPDV.Wpf.csproj
 
 Ao iniciar, a aplicação valida a conexão com o PostgreSQL e cria
 automaticamente qualquer tabela que estiver faltando. Com o banco OK, a
-aplicação leva para a tela de login (Fase 4); cadastros, vendas e demais
-módulos de negócio chegam nas próximas fases.
+aplicação leva para a tela de login; pagamentos completos, relatórios e
+impressão chegam nas próximas fases.
 
 Se você rodou `database/seed/seed_inicial.sql`, o primeiro acesso é
 `admin` / `admin123` — a aplicação exige a troca dessa senha no primeiro
-login (`sec_usuario.exige_troca_senha`).
+login (`sec_usuario.exige_troca_senha`). O seed também cria um funcionário
+vendedor vinculado ao `admin` e dois produtos de exemplo com estoque, para
+a tela de Venda funcionar imediatamente após o setup.
 
 ## Testes
 

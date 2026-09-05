@@ -100,6 +100,34 @@ public class TabelaPrecoRepository : ITabelaPrecoRepository
         return itens;
     }
 
+    public async Task<TabelaPrecoItem?> ObterItemAsync(
+        long tabelaPrecoId, long produtoId, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            SELECT id, tabela_preco_id, produto_id, preco FROM cad_tabela_preco_item
+            WHERE tabela_preco_id = @tabelaPrecoId AND produto_id = @produtoId
+            """;
+
+        await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("tabelaPrecoId", tabelaPrecoId);
+        command.Parameters.AddWithValue("produtoId", produtoId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new TabelaPrecoItem
+        {
+            Id = reader.GetInt64(0),
+            TabelaPrecoId = reader.GetInt64(1),
+            ProdutoId = reader.GetInt64(2),
+            Preco = reader.GetDecimal(3)
+        };
+    }
+
     public async Task DefinirItemAsync(
         long tabelaPrecoId, long produtoId, decimal preco, CancellationToken cancellationToken = default)
     {

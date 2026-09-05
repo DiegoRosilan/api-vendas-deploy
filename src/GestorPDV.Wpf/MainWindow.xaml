@@ -3,8 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GestorPDV.Wpf.ViewModels"
         xmlns:vmc="clr-namespace:GestorPDV.Wpf.ViewModels.Cadastros"
+        xmlns:vmv="clr-namespace:GestorPDV.Wpf.ViewModels.Vendas"
         xmlns:views="clr-namespace:GestorPDV.Wpf.Views"
         xmlns:viewsc="clr-namespace:GestorPDV.Wpf.Views.Cadastros"
+        xmlns:viewsv="clr-namespace:GestorPDV.Wpf.Views.Vendas"
         Title="GestorPDV" Height="750" Width="1200" MinHeight="500" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         Background="#F5F6FA">
@@ -51,6 +53,10 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmc:TabelaPrecoCadastroViewModel}">
             <viewsc:TabelaPrecoCadastroView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmv:VendaViewModel}">
+            <viewsv:VendaView />
         </DataTemplate>
     </Window.Resources>
 

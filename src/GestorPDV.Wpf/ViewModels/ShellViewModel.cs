@@ -2,18 +2,20 @@ using GestorPDV.Application.Common;
 using GestorPDV.Application.Seguranca;
 using GestorPDV.Wpf.Helpers;
 using GestorPDV.Wpf.ViewModels.Cadastros;
+using GestorPDV.Wpf.ViewModels.Vendas;
 
 namespace GestorPDV.Wpf.ViewModels;
 
 // Controla a navegação entre as telas da aplicação (verificação de banco,
-// login, troca de senha obrigatória, tela inicial pós-login e o menu de
-// cadastros). Telas futuras (vendas, etc. — Fases 6+) serão adicionadas
-// como novos métodos NavigateToXxx aqui.
+// login, troca de senha obrigatória, tela inicial pós-login, cadastros e
+// venda). Telas futuras (pagamentos, relatórios, etc. — Fases 7+) serão
+// adicionadas como novos métodos NavigateToXxx aqui.
 public class ShellViewModel : ObservableObject
 {
     private readonly IDatabaseInitializer _databaseInitializer;
     private readonly IAutenticacaoService _autenticacaoService;
     private readonly CadastroRepositorios _cadastroRepositorios;
+    private readonly VendaContexto _vendaContexto;
 
     private object? _currentViewModel;
     public object? CurrentViewModel
@@ -25,11 +27,13 @@ public class ShellViewModel : ObservableObject
     public ShellViewModel(
         IDatabaseInitializer databaseInitializer,
         IAutenticacaoService autenticacaoService,
-        CadastroRepositorios cadastroRepositorios)
+        CadastroRepositorios cadastroRepositorios,
+        VendaContexto vendaContexto)
     {
         _databaseInitializer = databaseInitializer;
         _autenticacaoService = autenticacaoService;
         _cadastroRepositorios = cadastroRepositorios;
+        _vendaContexto = vendaContexto;
     }
 
     public async Task IniciarAsync()
@@ -100,4 +104,16 @@ public class ShellViewModel : ObservableObject
     public void NavigateToTabelasPreco(SessaoUsuario sessao) =>
         CurrentViewModel = new TabelaPrecoCadastroViewModel(
             _cadastroRepositorios.TabelasPreco, _cadastroRepositorios.Filiais, sessao, this);
+
+    public void NavigateToVenda(SessaoUsuario sessao) =>
+        CurrentViewModel = new VendaViewModel(
+            _vendaContexto.VendaService,
+            _vendaContexto.VendaRepository,
+            _cadastroRepositorios.Produtos,
+            _cadastroRepositorios.Servicos,
+            _cadastroRepositorios.Clientes,
+            _cadastroRepositorios.FormasPagamento,
+            _cadastroRepositorios.Funcionarios,
+            sessao,
+            this);
 }
