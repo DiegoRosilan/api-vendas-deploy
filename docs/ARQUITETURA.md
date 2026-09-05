@@ -148,17 +148,17 @@ exata) — conforme item 12 do escopo.
 | 1    | Análise e arquitetura                  | Concluída (este documento) |
 | 2    | Banco de dados                         | Concluída (`database/`) |
 | 3    | Estrutura do projeto                   | Concluída (`src/`, `.sln`) |
-| 4    | Login (usuários, permissões, acesso)   | Pendente |
-| 5    | Cadastros (produtos, clientes, etc.)   | Pendente |
-| 6    | Vendas                                 | Pendente |
-| 7    | Pagamentos                             | Pendente |
-| 8    | Relatórios (FastReport)                | Pendente |
-| 9    | Impressão                              | Pendente |
+| 4    | Login (usuários, permissões, acesso)   | Concluída |
+| 5    | Cadastros (produtos, clientes, etc.)   | Concluída |
+| 6    | Vendas                                 | Concluída |
+| 7    | Pagamentos                             | Concluída |
+| 8    | Relatórios (FastReport)                | Concluída |
+| 9    | Impressão                              | Concluída |
 | 10   | Testes                                 | Pendente |
 | 11   | Publicação                             | Pendente |
 
-Ver `ROADMAP.md` para o detalhamento de cada fase pendente e para o registro
-de decisões/suposições tomadas ao longo do desenvolvimento.
+Ver `ROADMAP.md` para o detalhamento de cada fase concluída/pendente e o
+registro de decisões/suposições tomadas ao longo do desenvolvimento.
 
 ## 9. Limitação conhecida deste ambiente
 

@@ -19,5 +19,6 @@ num arquivo temporário e abre no visualizador padrão do sistema).
 
 Relatórios implementados na **Fase 8**: vendas por período, estoque atual e
 contas a receber em aberto (com juros/multa recalculados via
-`IFinanceiroService.CalcularEncargos`). Impressão (cupom, impressora
-térmica) chega na **Fase 9**.
+`IFinanceiroService.CalcularEncargos`). O envio do PDF direto para a
+impressora (Fase 9) e o cupom não fiscal da venda vivem em
+`GestorPDV.Wpf/Impressao` — ver `docs/ROADMAP.md`.

@@ -7,6 +7,7 @@ using GestorPDV.Application.Vendas;
 using GestorPDV.Domain.Cadastros;
 using GestorPDV.Domain.Vendas;
 using GestorPDV.Wpf.Helpers;
+using GestorPDV.Wpf.Impressao;
 using GestorPDV.Wpf.ViewModels.Cadastros;
 
 namespace GestorPDV.Wpf.ViewModels.Vendas;
@@ -28,6 +29,18 @@ public class PagamentoExibicao
     public int Parcelas { get; init; }
 }
 
+// Retrato de uma venda finalizada, capturado antes de IniciarNovaVenda()
+// limpar o carrinho, para permitir (re)imprimir o cupom depois.
+public record CupomPendente(
+    long Numero,
+    DateTimeOffset Data,
+    string ClienteNome,
+    IReadOnlyList<ItemCarrinhoExibicao> Itens,
+    IReadOnlyList<PagamentoExibicao> Pagamentos,
+    decimal Subtotal,
+    decimal Desconto,
+    decimal Total);
+
 // Tela de venda (PDV): monta o carrinho e os pagamentos em memória via
 // IVendaService e só grava no banco ao finalizar. RN-PAG-001: a venda pode
 // ter mais de uma forma de pagamento, desde que a soma feche com o total.
@@ -41,8 +54,11 @@ public class VendaViewModel : CadastroViewModelBase
     private readonly IClienteRepository _clienteRepository;
     private readonly IFormaPagamentoRepository _formaPagamentoRepository;
     private readonly IFuncionarioRepository _funcionarioRepository;
+    private readonly IFilialRepository _filialRepository;
     private readonly Dictionary<VendaProduto, string> _descricoesPorItem = new();
     private readonly List<VendaPagamento> _pagamentosPendentes = new();
+    private Filial? _filial;
+    private CupomPendente? _cupomPendente;
 
     public ObservableCollection<Produto> ResultadosBusca { get; } = new();
     public ObservableCollection<Servico> Servicos { get; } = new();
@@ -175,6 +191,7 @@ public class VendaViewModel : CadastroViewModelBase
     public ICommand RemoverPagamentoCommand { get; }
     public ICommand FinalizarCommand { get; }
     public ICommand CancelarVendaSelecionadaCommand { get; }
+    public ICommand ReimprimirCupomCommand { get; }
 
     public VendaViewModel(
         IVendaService vendaService,
@@ -185,6 +202,7 @@ public class VendaViewModel : CadastroViewModelBase
         IClienteRepository clienteRepository,
         IFormaPagamentoRepository formaPagamentoRepository,
         IFuncionarioRepository funcionarioRepository,
+        IFilialRepository filialRepository,
         SessaoUsuario sessao,
         ShellViewModel shell)
         : base(sessao, shell, () => shell.NavigateToHome(sessao))
@@ -197,6 +215,7 @@ public class VendaViewModel : CadastroViewModelBase
         _clienteRepository = clienteRepository;
         _formaPagamentoRepository = formaPagamentoRepository;
         _funcionarioRepository = funcionarioRepository;
+        _filialRepository = filialRepository;
 
         BuscarProdutoCommand = new RelayCommand(BuscarProdutoAsync);
         AdicionarProdutoCommand = new RelayCommand(AdicionarProdutoAsync, () => ProdutoSelecionado is not null && Venda is not null);
@@ -207,6 +226,7 @@ public class VendaViewModel : CadastroViewModelBase
         FinalizarCommand = new RelayCommand(
             FinalizarAsync, () => Venda is { Itens.Count: > 0 } && _pagamentosPendentes.Count > 0 && RestanteAPagar == 0);
         CancelarVendaSelecionadaCommand = new RelayCommand(CancelarVendaSelecionadaAsync, () => VendaHistoricoSelecionada is not null);
+        ReimprimirCupomCommand = new RelayCommand(() => Mensagem = ImprimirCupom(_cupomPendente), () => _cupomPendente is not null);
 
         _ = InicializarAsync();
     }
@@ -232,6 +252,7 @@ public class VendaViewModel : CadastroViewModelBase
             }
 
             Venda = _vendaService.IniciarVenda(Sessao.FilialId.Value, funcionarioVendedor.Id, Sessao.UsuarioId, null, null);
+            _filial = await _filialRepository.ObterPorIdAsync(Sessao.FilialId.Value);
 
             var caixaAberto = await _caixaRepository.ObterAbertoAsync(Sessao.FilialId.Value);
             CaixaAberto = caixaAberto is not null;
@@ -433,14 +454,41 @@ public class VendaViewModel : CadastroViewModelBase
                 return;
             }
 
-            Mensagem = $"Venda nº {Venda.Numero} finalizada com sucesso — total {Venda.Total:C}.";
+            var mensagemVenda = $"Venda nº {Venda.Numero} finalizada com sucesso — total {Venda.Total:C}.";
+
+            _cupomPendente = new CupomPendente(
+                Venda.Numero, Venda.DataVenda, ClienteSelecionado?.Pessoa?.Nome ?? "Consumidor final",
+                Itens.ToList(), Pagamentos.ToList(), Venda.Subtotal, Venda.Desconto, Venda.Total);
+
             await CarregarVendasDeHojeAsync();
             IniciarNovaVenda();
+            Mensagem = $"{mensagemVenda} {ImprimirCupom(_cupomPendente)}";
         }
         finally
         {
             Carregando = false;
         }
+    }
+
+    // A venda já foi gravada nesse ponto; uma falha ao imprimir (sem
+    // impressora, impressora offline etc.) não desfaz a venda — só devolve
+    // a mensagem de erro, deixando o operador tentar de novo com
+    // ReimprimirCupomCommand. Retorna uma mensagem de status (sucesso ou
+    // erro), nunca null, para o chamador sempre ter algo para mostrar.
+    private string ImprimirCupom(CupomPendente? cupom)
+    {
+        if (cupom is null)
+        {
+            return "Nenhuma venda para reimprimir o cupom.";
+        }
+
+        var nomeFilial = _filial?.NomeFantasia ?? _filial?.RazaoSocial ?? "GestorPDV";
+        var documento = CupomBuilder.Montar(
+            nomeFilial, cupom.Numero, cupom.Data, cupom.ClienteNome, cupom.Itens, cupom.Pagamentos,
+            cupom.Subtotal, cupom.Desconto, cupom.Total);
+
+        var resultado = ImpressoraHelper.Imprimir(documento, $"Cupom venda nº {cupom.Numero}");
+        return resultado.Sucesso ? "Cupom enviado para impressão." : resultado.Erro!;
     }
 
     private void IniciarNovaVenda()

@@ -51,6 +51,9 @@
                 </StackPanel>
             </Border>
 
+            <Button Content="Imprimir último relatório gerado" Command="{Binding ImprimirUltimoRelatorioCommand}"
+                    Padding="10,6" Margin="0,16,0,0" HorizontalAlignment="Left" />
+
             <TextBlock Text="{Binding Mensagem}" TextWrapping="Wrap" Foreground="#2563EB" Margin="0,16,0,0" />
         </StackPanel>
     </Grid>

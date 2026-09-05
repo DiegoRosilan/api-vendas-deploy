@@ -128,6 +128,7 @@ public class ShellViewModel : ObservableObject
             _cadastroRepositorios.Clientes,
             _cadastroRepositorios.FormasPagamento,
             _cadastroRepositorios.Funcionarios,
+            _cadastroRepositorios.Filiais,
             sessao,
             this);
 

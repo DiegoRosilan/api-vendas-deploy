@@ -5,16 +5,19 @@ using GestorPDV.Application.Common;
 using GestorPDV.Application.Relatorios;
 using GestorPDV.Application.Seguranca;
 using GestorPDV.Wpf.Helpers;
+using GestorPDV.Wpf.Impressao;
 using GestorPDV.Wpf.ViewModels.Cadastros;
 
 namespace GestorPDV.Wpf.ViewModels.Relatorios;
 
-// Tela de relatórios (Fase 8): gera o PDF em memória via IRelatorioService e
-// abre no visualizador padrão do sistema operacional — não há preview
-// embutido nesta fase (chega na Fase 9, junto com impressão).
+// Tela de relatórios: gera o PDF em memória via IRelatorioService e abre no
+// visualizador padrão do sistema operacional; ImprimirUltimoRelatorioCommand
+// (Fase 9) manda o último PDF gerado direto para a impressora padrão, sem
+// precisar abrir o visualizador.
 public class RelatoriosViewModel : CadastroViewModelBase
 {
     private readonly IRelatorioService _relatorioService;
+    private string? _ultimoArquivoGerado;
 
     private DateOnly _dataInicioVendas = DateOnly.FromDateTime(DateTime.Now).AddDays(-30);
     public DateOnly DataInicioVendas
@@ -33,6 +36,7 @@ public class RelatoriosViewModel : CadastroViewModelBase
     public ICommand GerarRelatorioVendasCommand { get; }
     public ICommand GerarRelatorioEstoqueCommand { get; }
     public ICommand GerarRelatorioContasReceberCommand { get; }
+    public ICommand ImprimirUltimoRelatorioCommand { get; }
 
     public RelatoriosViewModel(IRelatorioService relatorioService, SessaoUsuario sessao, ShellViewModel shell)
         : base(sessao, shell, () => shell.NavigateToHome(sessao))
@@ -42,6 +46,7 @@ public class RelatoriosViewModel : CadastroViewModelBase
         GerarRelatorioVendasCommand = new RelayCommand(GerarRelatorioVendasAsync);
         GerarRelatorioEstoqueCommand = new RelayCommand(GerarRelatorioEstoqueAsync);
         GerarRelatorioContasReceberCommand = new RelayCommand(GerarRelatorioContasReceberAsync);
+        ImprimirUltimoRelatorioCommand = new RelayCommand(ImprimirUltimoRelatorio, () => _ultimoArquivoGerado is not null);
     }
 
     private async Task GerarRelatorioVendasAsync()
@@ -95,6 +100,7 @@ public class RelatoriosViewModel : CadastroViewModelBase
 
             var caminho = Path.Combine(Path.GetTempPath(), $"relatorio-{nomeArquivo}-{DateTime.Now:yyyyMMddHHmmss}.pdf");
             await File.WriteAllBytesAsync(caminho, resultado.Valor!);
+            _ultimoArquivoGerado = caminho;
 
             try
             {
@@ -114,5 +120,18 @@ public class RelatoriosViewModel : CadastroViewModelBase
         {
             Carregando = false;
         }
+    }
+
+    // Fase 9: envia o último PDF gerado direto para a impressora padrão
+    // (verbo "print" do sistema), sem precisar abrir o visualizador.
+    private void ImprimirUltimoRelatorio()
+    {
+        if (_ultimoArquivoGerado is null)
+        {
+            return;
+        }
+
+        var resultado = ImpressoraHelper.ImprimirArquivo(_ultimoArquivoGerado);
+        Mensagem = resultado.Sucesso ? "Relatório enviado para a impressora." : resultado.Erro;
     }
 }

@@ -54,6 +54,6 @@
 
         <TextBlock Grid.Row="2" Margin="0,24,0,0" VerticalAlignment="Bottom"
                    Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap"
-                   Text="Fase 8 concluída: relatórios de vendas por período, estoque atual e contas a receber em aberto, gerados em PDF via FastReport. Impressão de cupom e tratamento de erros de impressora chegam na próxima fase." />
+                   Text="Fase 9 concluída: cupom não fiscal impresso ao finalizar a venda (com reimpressão) e relatórios enviados direto para a impressora, com tratamento de erros quando não há impressora configurada. Testes de compilação real em Windows e publicação chegam nas próximas fases." />
     </Grid>
 </UserControl>

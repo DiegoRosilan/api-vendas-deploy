@@ -98,13 +98,31 @@ do código).
   nem impressão direta ainda (chegam na Fase 9). Testado de ponta a ponta
   (build+prepare+export) em
   `GestorPDV.Tests/Relatorios/RelatorioTabularBuilderTests.cs`.
+- **Fase 9 — Impressão**: cupom não fiscal da venda impresso automaticamente
+  ao finalizar (e reimprimível via botão "Reimprimir cupom" na tela de
+  Venda) — `CupomBuilder` (`GestorPDV.Wpf.Impressao`) monta um
+  `FlowDocument` de 80mm (largura de impressora térmica) com os itens e
+  pagamentos da venda recém-finalizada, e `ImpressoraHelper.Imprimir`
+  mostra o `PrintDialog` do Windows e envia para a impressora escolhida.
+  Não é cupom fiscal (NFC-e) — emissão fiscal depende do motor tributário
+  (`GestorPDV.Fiscal`), que ainda não existe. Relatórios (Fase 8) ganharam
+  um botão "Imprimir último relatório gerado" que manda o PDF direto para
+  a impressora padrão via o verbo `"print"` do sistema operacional
+  (`ImpressoraHelper.ImprimirArquivo`), sem precisar abrir o visualizador.
+  Tratamento de erros de impressora (RN implícita do item 9 do escopo):
+  ambos os caminhos capturam `Win32Exception`/`Exception` de impressão e
+  mostram uma mensagem em português na tela em vez de deixar a exceção
+  subir crua — uma falha ao imprimir o cupom nunca desfaz a venda (que já
+  foi gravada antes de tentar imprimir).
 
 ## Pendentes
-- **Fase 9 — Impressão**: impressão de cupom/relatórios e tratamento de
-  erros de impressora.
-- **Fase 10 — Testes**: compilação real em ambiente com .NET 9 SDK/Visual
-  Studio, testes das regras de negócio em `GestorPDV.Tests`, validação de
-  cálculos e conexões, correção de problemas encontrados.
+- **Fase 10 — Testes**: desde a Fase 8, os 10 projetos que não são WPF e
+  `GestorPDV.Tests` já são compilados/testados de verdade a cada fase (ver
+  nota no topo deste arquivo) — falta só a compilação final do
+  `GestorPDV.Wpf` (XAML→BAML) numa máquina Windows com Visual Studio, e
+  testar manualmente as telas contra um PostgreSQL real (cadastros, venda,
+  caixa, financeiro, relatórios, impressão de cupom numa impressora de
+  verdade) — algo que este ambiente não consegue exercitar.
 - **Fase 11 — Publicação**: publish do `GestorPDV.Wpf` (self-contained ou
   framework-dependent) e instruções finais de instalação.
 
@@ -202,17 +220,34 @@ referência que permitam confirmar a regra exata (ver seção 7 de
     Revisar/redesenhar visualmente no FastReport Designer quando houver
     acesso a uma máquina Windows é opcional, não obrigatório — o resultado
     já é um PDF correto e legível.
-19. Relatórios (Fase 8): só exportação para PDF (via
+19. Relatórios (Fase 8): exportação para PDF (via
     `FastReport.OpenSource.Export.PdfSimple`, plugin oficial da edição
-    Open Source) — não há preview em tela nem impressão direta ainda
-    (chegam na Fase 9). O relatório "fiscal" citado no roteiro original não
-    foi incluído porque o motor tributário (`GestorPDV.Fiscal`) ainda não
-    está implementado; entra quando o Fiscal existir.
+    Open Source) — não há preview em tela do relatório antes de
+    abrir/imprimir. O relatório "fiscal" citado no roteiro original não foi
+    incluído porque o motor tributário (`GestorPDV.Fiscal`) ainda não está
+    implementado; entra quando o Fiscal existir.
 20. Relatório de estoque atual: soma a quantidade de todas as combinações de
     grade/lote de um produto num único total por produto/filial — não lista
     saldo por lote/grade individualmente. Só mostra produtos que já têm ao
     menos um registro em `est_estoque` (produto nunca movimentado não
     aparece).
+21. Cupom (Fase 9): não fiscal — não tem CFOP, impostos, chave de acesso
+    nem QR Code (isso é NFC-e/SAT, que dependem de `GestorPDV.Fiscal` e de
+    integração com a SEFAZ/equipamento fiscal). É só o comprovante interno
+    da venda (itens, pagamentos, total), no layout de bobina térmica de
+    80mm. O nome/endereço da filial vêm de `cad_filial`, mas o cupom não
+    imprime CNPJ/inscrição estadual — só nome.
+22. Impressão (Fase 9): usa `System.Windows.Controls.PrintDialog` (mostra o
+    seletor de impressora do Windows a cada impressão — não há impressão
+    "silenciosa" direto numa impressora pré-configurada, nem configuração
+    de impressora padrão por filial/estação). Não foi possível testar
+    contra uma impressora ou um PostgreSQL reais neste ambiente (sem
+    Windows, sem impressora) — só a compilação do código C# foi validada
+    (`dotnet build -p:EnableWindowsTargeting=true`); a API do
+    `PrintDialog`/`FlowDocument` foi conferida por reflexão contra o
+    assembly de referência do `Microsoft.WindowsDesktop.App` antes de
+    escrever o código, para não arriscar uma assinatura errada. Testar
+    numa impressora de verdade fica para a Fase 10.
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas
