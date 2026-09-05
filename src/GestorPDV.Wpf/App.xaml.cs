@@ -31,7 +31,18 @@ public partial class App : Application
         var usuarioRepository = new UsuarioRepository(connectionFactory);
         IAutenticacaoService autenticacaoService = new AutenticacaoService(usuarioRepository, passwordHasher);
 
-        var shellViewModel = new ShellViewModel(databaseInitializer, autenticacaoService);
+        var cadastroRepositorios = new CadastroRepositorios(
+            produtos: new ProdutoRepository(connectionFactory),
+            servicos: new ServicoRepository(connectionFactory),
+            clientes: new ClienteRepository(connectionFactory),
+            fornecedores: new FornecedorRepository(connectionFactory),
+            funcionarios: new FuncionarioRepository(connectionFactory),
+            filiais: new FilialRepository(connectionFactory),
+            formasPagamento: new FormaPagamentoRepository(connectionFactory),
+            condicoesPagamento: new CondicaoPagamentoRepository(connectionFactory),
+            tabelasPreco: new TabelaPrecoRepository(connectionFactory));
+
+        var shellViewModel = new ShellViewModel(databaseInitializer, autenticacaoService, cadastroRepositorios);
 
         var mainWindow = new MainWindow { DataContext = shellViewModel };
         MainWindow = mainWindow;

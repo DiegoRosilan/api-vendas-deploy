@@ -1,0 +1,105 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Cadastros.FornecedorCadastroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Fornecedores" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <Button Grid.Column="1" Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <Button DockPanel.Dock="Right" Content="Pesquisar" Command="{Binding PesquisarCommand}" Padding="10,4" Margin="8,0,0,0" />
+                    <TextBox Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" />
+                </DockPanel>
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Itens}" SelectedItem="{Binding Selecionado}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nome/Razão social" Binding="{Binding Pessoa.Nome}" Width="*" />
+                        <DataGridTextColumn Header="CPF/CNPJ" Binding="{Binding Pessoa.CpfCnpj}" Width="130" />
+                        <DataGridTextColumn Header="Telefone" Binding="{Binding Pessoa.Telefone}" Width="110" />
+                        <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding Pessoa.Ativo}" Width="60" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel DataContext="{Binding EntidadeEmEdicao}">
+                        <TextBlock Text="Tipo de pessoa" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                        <ComboBox SelectedItem="{Binding Pessoa.TipoPessoa}"
+                                  ItemsSource="{Binding DataContext.TiposPessoaDisponiveis, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+                        <TextBlock Text="Nome/Razão social" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Pessoa.Nome, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="CPF/CNPJ" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Pessoa.CpfCnpj, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Telefone" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Pessoa.Telefone, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="E-mail" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Pessoa.Email, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Banco" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding Banco, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Agência" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding Agencia, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Conta" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Conta, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Observação" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Observacao, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" Height="60" TextWrapping="Wrap" />
+
+                        <CheckBox Content="Ativo" IsChecked="{Binding Pessoa.Ativo}" Margin="0,12,0,0" />
+
+                        <Button Content="Novo" Command="{Binding DataContext.NovoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Margin="0,20,0,0" Padding="10,6" />
+                        <Button Content="Salvar" Style="{StaticResource BotaoPrimario}"
+                                Command="{Binding DataContext.SalvarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Margin="0,8,0,0" />
+
+                        <TextBlock Text="{Binding DataContext.Mensagem, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   TextWrapping="Wrap" Foreground="#2563EB" Margin="0,10,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

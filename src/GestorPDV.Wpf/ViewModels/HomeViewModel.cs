@@ -14,12 +14,17 @@ public class HomeViewModel : ObservableObject
         ? "Nenhuma permissão atribuída."
         : string.Join(", ", Sessao.Permissoes);
 
+    // RN-SEG-001: bloqueio de ações/botões conforme a permissão do usuário.
+    public bool PodeGerenciarCadastros => Sessao.TemPermissao("CADASTRO_GERENCIAR");
+
+    public ICommand AbrirCadastrosCommand { get; }
     public ICommand SairCommand { get; }
 
     public HomeViewModel(SessaoUsuario sessao, ShellViewModel shell)
     {
         Sessao = sessao;
         _shell = shell;
+        AbrirCadastrosCommand = new RelayCommand(() => _shell.NavigateToCadastrosMenu(Sessao));
         SairCommand = new RelayCommand(() => _shell.NavigateToLogin());
     }
 }

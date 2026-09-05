@@ -1,0 +1,115 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Cadastros.ProdutoCadastroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Produtos" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <Button Grid.Column="1" Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <Button DockPanel.Dock="Right" Content="Pesquisar" Command="{Binding PesquisarCommand}" Padding="10,4" Margin="8,0,0,0" />
+                    <TextBox Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}" />
+                </DockPanel>
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Itens}" SelectedItem="{Binding Selecionado}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="90" />
+                        <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" />
+                        <DataGridTextColumn Header="Preço venda" Binding="{Binding PrecoVenda, StringFormat={}{0:N2}}" Width="100" />
+                        <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding Ativo}" Width="60" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel DataContext="{Binding EntidadeEmEdicao}">
+                        <TextBlock Text="Código" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Código de barras" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding CodigoBarras, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Descrição" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Descricao, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Unidade" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding Unidade, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Preço de custo" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding PrecoCusto, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Preço de venda" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding PrecoVenda, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Estoque mínimo" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding EstoqueMinimo, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Localização" Style="{StaticResource RotuloCampo}" />
+                                <TextBox Text="{Binding Localizacao, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Desconto máximo (%)" Style="{StaticResource RotuloCampo}" />
+                        <TextBox Text="{Binding DescontoMaximoPct, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <CheckBox Content="Bloquear desconto acima do limite" IsChecked="{Binding BloquearDesconto}" Margin="0,12,0,0" />
+                        <CheckBox Content="Controla estoque" IsChecked="{Binding ControlaEstoque}" Margin="0,8,0,0" />
+                        <CheckBox Content="Ativo" IsChecked="{Binding Ativo}" Margin="0,8,0,0" />
+
+                        <Button Content="Novo" Command="{Binding DataContext.NovoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Margin="0,20,0,0" Padding="10,6" />
+                        <Button Content="Salvar" Style="{StaticResource BotaoPrimario}"
+                                Command="{Binding DataContext.SalvarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Margin="0,8,0,0" />
+
+                        <TextBlock Text="{Binding DataContext.Mensagem, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   TextWrapping="Wrap" Foreground="#2563EB" Margin="0,10,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

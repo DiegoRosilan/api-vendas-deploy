@@ -4,5 +4,43 @@
              xmlns:helpers="clr-namespace:GestorPDV.Wpf.Helpers">
     <Application.Resources>
         <helpers:BoolParaVisibilidadeConverter x:Key="BoolParaVisibilidade" />
+        <helpers:DateOnlyParaDateTimeConverter x:Key="DateOnlyParaDateTime" />
+
+        <!-- Estilos compartilhados pelas telas de cadastro (lista + formulário). -->
+        <Style x:Key="RotuloCampo" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="Margin" Value="0,8,0,4" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="BorderBrush" Value="#D1D5DB" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Padding" Value="6" />
+        </Style>
+
+        <Style x:Key="BotaoPrimario" TargetType="Button">
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="RowHeight" Value="30" />
+        </Style>
     </Application.Resources>
 </Application>

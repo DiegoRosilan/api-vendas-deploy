@@ -26,11 +26,19 @@ fase só avança se a anterior não tiver erro crítico pendente.
   reais, que chegam nas próximas fases. Testado com dublês de repositório
   em `GestorPDV.Tests/Seguranca/AutenticacaoServiceTests.cs` (sem
   dependência de PostgreSQL).
+- **Fase 5 — Cadastros**: CRUD completo (Application + Data.Postgres + WPF)
+  para produtos, serviços, clientes, fornecedores, funcionários, filiais,
+  formas de pagamento, condições de pagamento e tabelas de preço (cabeçalho).
+  Cliente/Fornecedor/Funcionário compartilham o cadastro de pessoa
+  (`cad_pessoa`) via `PessoaRepositoryHelper`, com inserção/atualização
+  transacional (pessoa + registro específico em uma única transação). Uma
+  tela "Cadastros" no Home (visível só com a permissão `CADASTRO_GERENCIAR`,
+  RN-SEG-001) dá acesso às 9 telas, cada uma com lista + formulário de
+  edição. Não há exclusão física em nenhum cadastro — desativar é editar o
+  registro e desmarcar "Ativo", preservando o histórico de vendas/movimentos
+  que referenciam esses registros.
 
 ## Pendentes
-- **Fase 5 — Cadastros**: telas e serviços de produtos, clientes,
-  fornecedores, funcionários, filiais, formas/condições de pagamento e
-  tabelas de preço, sobre as tabelas já criadas na Fase 2.
 - **Fase 6 — Vendas**: fluxo completo de inclusão de item, cálculo de
   subtotal/total/desconto/acréscimo, promoção/tabela de preço, baixa de
   estoque, pré-venda/orçamento/pedido, devolução e cancelamento
@@ -78,8 +86,19 @@ referência que permitam confirmar a regra exata (ver seção 7 de
    comportamento do executável de referência.
 8. Permissões: um código de permissão específico do usuário
    (`sec_usuario_permissao`) sempre sobrepõe o valor herdado do perfil
-   (`sec_perfil_permissao`) para o mesmo código — ainda não há UI para
-   editar essas permissões (chega com os cadastros, Fase 5).
+   (`sec_perfil_permissao`) para o mesmo código. Ainda não há tela para
+   editar perfis/permissões em si (só o uso delas para liberar/bloquear
+   botões) — avaliar se entra numa fase futura ou fica como manutenção
+   direta no banco.
+9. Tabela de preço: a Fase 5 cadastra só o cabeçalho
+   (`cad_tabela_preco`); a associação produto → preço
+   (`cad_tabela_preco_item`) já tem repositório (`ITabelaPrecoRepository`)
+   mas ganha tela própria na Fase 6, junto da resolução de preço/promoção
+   da venda.
+10. Funcionário: o campo "usuário do sistema" (`cad_funcionario.usuario_id`)
+    ainda não tem seletor na tela (não há listagem de usuários exposta por
+    `IUsuarioRepository` hoje) — associar um funcionário a um login deve
+    ser feito diretamente no banco até essa tela existir.
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas

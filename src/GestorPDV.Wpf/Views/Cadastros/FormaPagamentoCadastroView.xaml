@@ -1,0 +1,68 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Cadastros.FormaPagamentoCadastroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Formas de pagamento" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Atualizar" Command="{Binding CarregarCommand}" Padding="10,4" Margin="0,0,8,0" />
+                <Button Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid Grid.Column="0" ItemsSource="{Binding Itens}" SelectedItem="{Binding Selecionado}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="80" />
+                    <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao}" Width="*" />
+                    <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="120" />
+                    <DataGridCheckBoxColumn Header="Ativa" Binding="{Binding Ativo}" Width="55" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1">
+                <StackPanel DataContext="{Binding EntidadeEmEdicao}">
+                    <TextBlock Text="Código" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding Codigo, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Descrição" Style="{StaticResource RotuloCampo}" />
+                    <TextBox Text="{Binding Descricao, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Tipo" Style="{StaticResource RotuloCampo}" />
+                    <ComboBox SelectedItem="{Binding Tipo}"
+                              ItemsSource="{Binding DataContext.TiposDisponiveis, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+                    <CheckBox Content="Permite parcelamento" IsChecked="{Binding PermiteParcelamento}" Margin="0,12,0,0" />
+                    <CheckBox Content="Gera lançamento financeiro" IsChecked="{Binding GeraFinanceiro}" Margin="0,8,0,0" />
+                    <CheckBox Content="Movimenta caixa" IsChecked="{Binding MovimentaCaixa}" Margin="0,8,0,0" />
+                    <CheckBox Content="Ativa" IsChecked="{Binding Ativo}" Margin="0,8,0,0" />
+
+                    <Button Content="Nova" Command="{Binding DataContext.NovoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Margin="0,20,0,0" Padding="10,6" />
+                    <Button Content="Salvar" Style="{StaticResource BotaoPrimario}"
+                            Command="{Binding DataContext.SalvarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Margin="0,8,0,0" />
+
+                    <TextBlock Text="{Binding DataContext.Mensagem, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                               TextWrapping="Wrap" Foreground="#2563EB" Margin="0,10,0,0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

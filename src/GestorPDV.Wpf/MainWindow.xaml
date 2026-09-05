@@ -2,8 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GestorPDV.Wpf.ViewModels"
+        xmlns:vmc="clr-namespace:GestorPDV.Wpf.ViewModels.Cadastros"
         xmlns:views="clr-namespace:GestorPDV.Wpf.Views"
-        Title="GestorPDV" Height="500" Width="900"
+        xmlns:viewsc="clr-namespace:GestorPDV.Wpf.Views.Cadastros"
+        Title="GestorPDV" Height="750" Width="1200" MinHeight="500" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         Background="#F5F6FA">
     <Window.Resources>
@@ -18,6 +20,37 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:HomeViewModel}">
             <views:HomeView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmc:CadastrosMenuViewModel}">
+            <viewsc:CadastrosMenuView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:ProdutoCadastroViewModel}">
+            <viewsc:ProdutoCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:ServicoCadastroViewModel}">
+            <viewsc:ServicoCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:ClienteCadastroViewModel}">
+            <viewsc:ClienteCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:FornecedorCadastroViewModel}">
+            <viewsc:FornecedorCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:FuncionarioCadastroViewModel}">
+            <viewsc:FuncionarioCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:FilialCadastroViewModel}">
+            <viewsc:FilialCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:FormaPagamentoCadastroViewModel}">
+            <viewsc:FormaPagamentoCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:CondicaoPagamentoCadastroViewModel}">
+            <viewsc:CondicaoPagamentoCadastroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmc:TabelaPrecoCadastroViewModel}">
+            <viewsc:TabelaPrecoCadastroView />
         </DataTemplate>
     </Window.Resources>
 

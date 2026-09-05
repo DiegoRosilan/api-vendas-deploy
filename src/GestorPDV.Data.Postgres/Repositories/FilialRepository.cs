@@ -47,6 +47,59 @@ public class FilialRepository : IFilialRepository
         return await reader.ReadAsync(cancellationToken) ? MapFilial(reader) : null;
     }
 
+    public async Task<long> InserirAsync(Filial filial, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            INSERT INTO cad_filial
+                (codigo, razao_social, nome_fantasia, cnpj, inscricao_estadual, endereco,
+                 numero, bairro, municipio, uf, cep, telefone, ativo)
+            VALUES
+                (@codigo, @razaoSocial, @nomeFantasia, @cnpj, @inscricaoEstadual, @endereco,
+                 @numero, @bairro, @municipio, @uf, @cep, @telefone, @ativo)
+            RETURNING id
+            """;
+
+        await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        AdicionarParametros(command, filial);
+        return (long)(await command.ExecuteScalarAsync(cancellationToken))!;
+    }
+
+    public async Task AtualizarAsync(Filial filial, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE cad_filial SET
+                codigo = @codigo, razao_social = @razaoSocial, nome_fantasia = @nomeFantasia,
+                cnpj = @cnpj, inscricao_estadual = @inscricaoEstadual, endereco = @endereco,
+                numero = @numero, bairro = @bairro, municipio = @municipio, uf = @uf,
+                cep = @cep, telefone = @telefone, ativo = @ativo
+            WHERE id = @id
+            """;
+
+        await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("id", filial.Id);
+        AdicionarParametros(command, filial);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static void AdicionarParametros(NpgsqlCommand command, Filial filial)
+    {
+        command.Parameters.AddWithValue("codigo", filial.Codigo);
+        command.Parameters.AddWithValue("razaoSocial", filial.RazaoSocial);
+        command.Parameters.AddWithValue("nomeFantasia", (object?)filial.NomeFantasia ?? DBNull.Value);
+        command.Parameters.AddWithValue("cnpj", (object?)filial.Cnpj ?? DBNull.Value);
+        command.Parameters.AddWithValue("inscricaoEstadual", (object?)filial.InscricaoEstadual ?? DBNull.Value);
+        command.Parameters.AddWithValue("endereco", (object?)filial.Endereco ?? DBNull.Value);
+        command.Parameters.AddWithValue("numero", (object?)filial.Numero ?? DBNull.Value);
+        command.Parameters.AddWithValue("bairro", (object?)filial.Bairro ?? DBNull.Value);
+        command.Parameters.AddWithValue("municipio", (object?)filial.Municipio ?? DBNull.Value);
+        command.Parameters.AddWithValue("uf", (object?)filial.Uf ?? DBNull.Value);
+        command.Parameters.AddWithValue("cep", (object?)filial.Cep ?? DBNull.Value);
+        command.Parameters.AddWithValue("telefone", (object?)filial.Telefone ?? DBNull.Value);
+        command.Parameters.AddWithValue("ativo", filial.Ativo);
+    }
+
     private static Filial MapFilial(NpgsqlDataReader reader) => new()
     {
         Id = reader.GetInt64(0),

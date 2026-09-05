@@ -23,8 +23,12 @@
                 </TextBlock>
             </StackPanel>
 
-            <Button Grid.Column="1" Content="Sair" Command="{Binding SairCommand}"
-                    Padding="12,6" VerticalAlignment="Top" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Content="Cadastros" Command="{Binding AbrirCadastrosCommand}"
+                        Padding="12,6" Margin="0,0,8,0"
+                        Visibility="{Binding PodeGerenciarCadastros, Converter={StaticResource BoolParaVisibilidade}}" />
+                <Button Content="Sair" Command="{Binding SairCommand}" Padding="12,6" />
+            </StackPanel>
         </Grid>
 
         <Border Grid.Row="1" Margin="0,24,0,0" Padding="16" CornerRadius="6"
@@ -38,6 +42,6 @@
 
         <TextBlock Grid.Row="2" Margin="0,24,0,0" VerticalAlignment="Bottom"
                    Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap"
-                   Text="Fase 4 concluída: login, permissões e troca de senha. Cadastros, vendas, pagamentos, relatórios e impressão chegam nas próximas fases." />
+                   Text="Fase 5 concluída: cadastros de produtos, serviços, clientes, fornecedores, funcionários, filiais, formas/condições de pagamento e tabelas de preço. Vendas, pagamentos, relatórios e impressão chegam nas próximas fases." />
     </Grid>
 </UserControl>
