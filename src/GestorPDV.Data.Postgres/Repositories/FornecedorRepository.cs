@@ -22,7 +22,7 @@ public class FornecedorRepository : IFornecedorRepository
 
     public async Task<IReadOnlyList<Fornecedor>> ListarAsync(string? filtro, CancellationToken cancellationToken = default)
     {
-        var sql = $"{BaseSelect} WHERE (@filtro IS NULL OR p.nome ILIKE @filtro OR p.cpf_cnpj ILIKE @filtro) ORDER BY p.nome";
+        var sql = $"{BaseSelect} WHERE (@filtro::text IS NULL OR p.nome ILIKE @filtro OR p.cpf_cnpj ILIKE @filtro) ORDER BY p.nome";
 
         await using var connection = await _connectionFactory.CriarAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);

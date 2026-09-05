@@ -20,7 +20,7 @@ public class ServicoRepository : IServicoRepository
     {
         var sql = $"""
             SELECT {Colunas} FROM cad_servico
-            WHERE @filtro IS NULL OR descricao ILIKE @filtro OR codigo ILIKE @filtro
+            WHERE @filtro::text IS NULL OR descricao ILIKE @filtro OR codigo ILIKE @filtro
             ORDER BY descricao
             """;
 

@@ -13,6 +13,13 @@ marcada como concluída; `GestorPDV.Wpf` continua exigindo Windows para a
 etapa final de compilação de XAML (limitação da própria ferramenta WPF, não
 do código).
 
+**Nota (Fase 10)**: o ambiente também passou a ter um PostgreSQL 16 real
+disponível (`psql`, cluster local), o que permitiu rodar o schema, o seed e
+os fluxos críticos de ponta a ponta pela primeira vez — não só compilar,
+mas executar de verdade contra um banco real. Isso encontrou dois bugs que
+nem a compilação real nem os testes com dublês (que não tocam banco)
+conseguiam pegar; ver o detalhamento na Fase 10 abaixo.
+
 ## Concluídas
 
 - **Fase 1 — Análise e arquitetura**: `docs/ARQUITETURA.md`.
@@ -114,15 +121,51 @@ do código).
   mostram uma mensagem em português na tela em vez de deixar a exceção
   subir crua — uma falha ao imprimir o cupom nunca desfaz a venda (que já
   foi gravada antes de tentar imprimir).
+- **Fase 10 — Testes**: com um PostgreSQL 16 real disponível neste ambiente
+  (`psql`, cluster local), rodei o schema (`database/schema/run.sql`) e o
+  seed (`database/seed/seed_inicial.sql`) contra um banco `gestordb` de
+  verdade e exercitei de ponta a ponta, com um harness de integração
+  descartável (não versionado): login, permissões, abrir caixa, venda à
+  vista (baixa de estoque + movimento de caixa), cancelamento (estorno de
+  estoque e caixa), venda a prazo (documento financeiro parcelado), baixa
+  de parcela, bloqueio de cliente inadimplente (RN-CLI-001), preço por
+  tabela (RN-VEN-006), os 3 relatórios em PDF (Fase 8), troca de senha, e
+  as validações de erro (caixa duplicado, parcela baixada de novo, login
+  com senha errada) — 39 verificações, todas passando ao final. Isso
+  encontrou e corrigiu dois bugs que nem a compilação real (Fase 8/9) nem
+  os testes com dublês conseguiam pegar, porque nenhum dos dois toca um
+  PostgreSQL de verdade:
+  1. **Bug de tipo de parâmetro em 5 repositórios** (`ProdutoRepository`,
+     `ServicoRepository`, `ClienteRepository`, `FornecedorRepository`,
+     `FuncionarioRepository`): a consulta `WHERE @filtro IS NULL OR coluna
+     ILIKE @filtro OR ...` falhava com `PostgresException 42P08: could not
+     determine data type of parameter $1` sempre que `filtro` era `null`
+     — ou seja, toda vez que uma tela de cadastro carregava a lista inicial
+     sem filtro (o caso mais comum!). O Postgres não consegue inferir o
+     tipo do parâmetro só a partir do `IS NULL` combinado com múltiplos usos
+     em `ILIKE`. Corrigido qualificando o primeiro uso como `@filtro::text
+     IS NULL`, o que resolve o tipo do parâmetro para a consulta inteira.
+  2. **`database/schema/run.sql` quebrava quando executado exatamente como
+     o `README.md` documenta** (a partir da raiz do repositório): os `\i
+     nome_do_arquivo.sql` resolvem o caminho contra o diretório de trabalho
+     do `psql`, não contra a pasta onde `run.sql` está — rodar o comando
+     documentado (`psql ... -f database/schema/run.sql`) da raiz do repo
+     falhava com "00_extensions.sql: No such file or directory". Corrigido
+     trocando `\i` por `\ir` (include relativo ao próprio arquivo, não ao
+     `cwd` do psql). Isso não afetava a aplicação em si —
+     `SchemaScriptRunner` (`GestorPDV.Infrastructure`) lê cada `.sql`
+     diretamente via C#, sem depender do `run.sql`/`psql` — só o passo
+     manual de bootstrap do banco documentado no README.
+  Compatibilidade BCrypt.Net-Next × `pgcrypto crypt(senha, gen_salt('bf'))`
+  do seed também foi confirmada real (login funcionou contra o hash gerado
+  pelo Postgres, não só pelo hasher do próprio C#). O harness em si não foi
+  versionado (usa caminhos absolutos deste ambiente e um `DatabaseOptions`
+  fixo) — os bugs que ele encontrou, sim, estão corrigidos no código.
+  `GestorPDV.Wpf` continua sem poder ser compilado/testado de ponta a ponta
+  aqui (WPF exige Windows) — falta testar as telas manualmente contra este
+  mesmo banco e imprimir numa impressora de verdade.
 
 ## Pendentes
-- **Fase 10 — Testes**: desde a Fase 8, os 10 projetos que não são WPF e
-  `GestorPDV.Tests` já são compilados/testados de verdade a cada fase (ver
-  nota no topo deste arquivo) — falta só a compilação final do
-  `GestorPDV.Wpf` (XAML→BAML) numa máquina Windows com Visual Studio, e
-  testar manualmente as telas contra um PostgreSQL real (cadastros, venda,
-  caixa, financeiro, relatórios, impressão de cupom numa impressora de
-  verdade) — algo que este ambiente não consegue exercitar.
 - **Fase 11 — Publicação**: publish do `GestorPDV.Wpf` (self-contained ou
   framework-dependent) e instruções finais de instalação.
 

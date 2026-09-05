@@ -154,7 +154,7 @@ exata) — conforme item 12 do escopo.
 | 7    | Pagamentos                             | Concluída |
 | 8    | Relatórios (FastReport)                | Concluída |
 | 9    | Impressão                              | Concluída |
-| 10   | Testes                                 | Pendente |
+| 10   | Testes                                 | Concluída neste ambiente (schema/seed/fluxos críticos contra PostgreSQL real); falta testar as telas WPF numa máquina Windows |
 | 11   | Publicação                             | Pendente |
 
 Ver `ROADMAP.md` para o detalhamento de cada fase concluída/pendente e o

@@ -26,7 +26,7 @@ public class ProdutoRepository : IProdutoRepository
     {
         var sql = $"""
             SELECT {Colunas} FROM cad_produto
-            WHERE @filtro IS NULL OR descricao ILIKE @filtro OR codigo ILIKE @filtro OR codigo_barras ILIKE @filtro
+            WHERE @filtro::text IS NULL OR descricao ILIKE @filtro OR codigo ILIKE @filtro OR codigo_barras ILIKE @filtro
             ORDER BY descricao
             """;
 

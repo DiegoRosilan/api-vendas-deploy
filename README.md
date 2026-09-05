@@ -4,13 +4,14 @@ ERP/PDV completo para varejo em geral, oficina mecânica, supermercado,
 farmácia, armarinho, bar/restaurante, loja de roupas, indústria e segmentos
 similares — C#, .NET 9, WPF e PostgreSQL.
 
-Este repositório está na **Fase 9** do desenvolvimento (de 11 fases — ver
+Este repositório está na **Fase 10** do desenvolvimento (de 11 fases — ver
 `docs/ROADMAP.md`): análise/arquitetura, banco de dados, estrutura do
-projeto, login, cadastros, vendas, pagamentos, relatórios (vendas por
-período, estoque atual e contas a receber em aberto, gerados em PDF via
-FastReport.OpenSource) e impressão (cupom não fiscal da venda e envio de
-relatórios direto para a impressora) concluídos. Testes de compilação
-real em Windows e publicação são implementados nas próximas fases.
+projeto, login, cadastros, vendas, pagamentos, relatórios, impressão e
+testes concluídos — os fluxos críticos (login, venda, caixa, financeiro,
+relatórios) já foram exercitados de ponta a ponta contra um PostgreSQL
+real, o que encontrou e corrigiu dois bugs (ver `docs/ROADMAP.md`, Fase
+10). Falta só testar as telas do `GestorPDV.Wpf` numa máquina Windows
+(WPF não compila fora do Windows) e a publicação final.
 
 ## Documentação
 
