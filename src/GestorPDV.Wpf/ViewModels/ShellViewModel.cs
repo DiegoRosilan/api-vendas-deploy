@@ -2,20 +2,24 @@ using GestorPDV.Application.Common;
 using GestorPDV.Application.Seguranca;
 using GestorPDV.Wpf.Helpers;
 using GestorPDV.Wpf.ViewModels.Cadastros;
+using GestorPDV.Wpf.ViewModels.Caixa;
+using GestorPDV.Wpf.ViewModels.Financeiro;
 using GestorPDV.Wpf.ViewModels.Vendas;
 
 namespace GestorPDV.Wpf.ViewModels;
 
 // Controla a navegação entre as telas da aplicação (verificação de banco,
-// login, troca de senha obrigatória, tela inicial pós-login, cadastros e
-// venda). Telas futuras (pagamentos, relatórios, etc. — Fases 7+) serão
-// adicionadas como novos métodos NavigateToXxx aqui.
+// login, troca de senha obrigatória, tela inicial pós-login, cadastros,
+// venda, caixa e financeiro). Telas futuras (relatórios, impressão — Fases
+// 8+) serão adicionadas como novos métodos NavigateToXxx aqui.
 public class ShellViewModel : ObservableObject
 {
     private readonly IDatabaseInitializer _databaseInitializer;
     private readonly IAutenticacaoService _autenticacaoService;
     private readonly CadastroRepositorios _cadastroRepositorios;
     private readonly VendaContexto _vendaContexto;
+    private readonly CaixaContexto _caixaContexto;
+    private readonly FinanceiroContexto _financeiroContexto;
 
     private object? _currentViewModel;
     public object? CurrentViewModel
@@ -28,12 +32,16 @@ public class ShellViewModel : ObservableObject
         IDatabaseInitializer databaseInitializer,
         IAutenticacaoService autenticacaoService,
         CadastroRepositorios cadastroRepositorios,
-        VendaContexto vendaContexto)
+        VendaContexto vendaContexto,
+        CaixaContexto caixaContexto,
+        FinanceiroContexto financeiroContexto)
     {
         _databaseInitializer = databaseInitializer;
         _autenticacaoService = autenticacaoService;
         _cadastroRepositorios = cadastroRepositorios;
         _vendaContexto = vendaContexto;
+        _caixaContexto = caixaContexto;
+        _financeiroContexto = financeiroContexto;
     }
 
     public async Task IniciarAsync()
@@ -109,11 +117,24 @@ public class ShellViewModel : ObservableObject
         CurrentViewModel = new VendaViewModel(
             _vendaContexto.VendaService,
             _vendaContexto.VendaRepository,
+            _caixaContexto.CaixaRepository,
             _cadastroRepositorios.Produtos,
             _cadastroRepositorios.Servicos,
             _cadastroRepositorios.Clientes,
             _cadastroRepositorios.FormasPagamento,
             _cadastroRepositorios.Funcionarios,
+            sessao,
+            this);
+
+    public void NavigateToCaixa(SessaoUsuario sessao) =>
+        CurrentViewModel = new CaixaViewModel(_caixaContexto.CaixaService, _caixaContexto.CaixaRepository, sessao, this);
+
+    public void NavigateToFinanceiro(SessaoUsuario sessao) =>
+        CurrentViewModel = new FinanceiroViewModel(
+            _financeiroContexto.FinanceiroService,
+            _financeiroContexto.FinanceiroRepository,
+            _cadastroRepositorios.Clientes,
+            _cadastroRepositorios.FormasPagamento,
             sessao,
             this);
 }

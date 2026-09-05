@@ -13,3 +13,4 @@
 \i 08_caixa.sql
 \i 09_fiscal.sql
 \i 10_comissao_dre.sql
+\i 11_ajuste_financeiro.sql

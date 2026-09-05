@@ -50,11 +50,29 @@ fase só avança se a anterior não tiver erro crítico pendente.
   no Home (permissão `VENDA_INCLUIR`) com busca de produto/serviço,
   carrinho, totais ao vivo, forma de pagamento e uma lista de vendas do
   dia com cancelamento (permissão `VENDA_CANCELAR`).
+- **Fase 7 — Pagamentos**: `VendaService.FinalizarVendaAsync` passou a
+  aceitar uma lista de `VendaPagamento` (RN-PAG-001), validando que a soma
+  bate com o total da venda antes de abrir a transação. Para cada
+  pagamento: se a forma `MovimentaCaixa`, lança um `MovimentoCaixa` do tipo
+  `Venda` no caixa aberto da filial (`ICaixaRepository`,
+  `GestorPDV.Caixa.Servicos.CaixaService` — RN-CAI-001); se `GeraFinanceiro`,
+  gera um `DocumentoFinanceiro` com parcelas via `GeradorDocumentoFinanceiro`
+  (helper compartilhado com `FinanceiroService`, RN-FIN-001), exigindo cliente
+  informado e checando bloqueio por inadimplência (RN-CLI-001,
+  `IFinanceiroService.VerificarBloqueioClienteAsync`) antes de finalizar.
+  Cancelar venda agora também estorna os movimentos de caixa
+  (`EstornarMovimentosPorDocumentoAsync`, lançando o inverso, nunca
+  apagando) e cancela os documentos financeiros ainda em aberto gerados
+  pela venda. Tela "Caixa" (permissão `CAIXA_ABRIR`) para abrir, registrar
+  sangria/suprimento e fechar o caixa da filial, com o extrato de
+  movimentos. Tela "Financeiro" (permissão `FINANCEIRO_BAIXAR`) lista as
+  parcelas em aberto/parcial da filial com juros/multa por atraso já
+  calculados (RN-FIN-002/003) e permite dar baixa individual de uma
+  parcela. `FinanceiroService.CalcularEncargos` (função pura) e o fluxo de
+  baixa são testados sem banco em
+  `GestorPDV.Tests/Financeiro/FinanceiroServiceTests.cs`.
 
 ## Pendentes
-- **Fase 7 — Pagamentos**: múltiplas formas de pagamento por venda,
-  parcelamento, dados de cartão/Pix, juros/multa/renegociação, caixa
-  (`FinalizaFormaPagamento`, `CalculaPagamentos`, `Renegocia`).
 - **Fase 8 — Relatórios**: integração FastReport lendo diretamente do
   PostgreSQL (vendas, estoque, financeiro, fiscal).
 - **Fase 9 — Impressão**: impressão de cupom/relatórios e tratamento de
@@ -87,8 +105,9 @@ referência que permitam confirmar a regra exata (ver seção 7 de
    editável no carrinho ainda não existem — dependem de um cadastro de
    promoções (`est_promocao`), que não foi construído.
 5. Bloqueio de cliente inadimplente (RN-CLI-001,
-   `bloquear_venda_dias_vencido`): ainda não implementado — só se aplica
-   quando houver venda a prazo/parcelada, que é escopo da Fase 7.
+   `bloquear_venda_dias_vencido`): implementado na Fase 7
+   (`FinanceiroService.VerificarBloqueioClienteAsync`), calculado a partir
+   do maior atraso entre as parcelas em aberto do cliente na data atual.
 6. Regras fiscais completas (ICMS-ST, DIFAL, IBS/CBS, e mesmo o ICMS normal)
    não são calculadas na Fase 6: os campos fiscais de `mv_venda_produto`
    ficam em zero. Calcular impostos exige o motor tributário
@@ -130,6 +149,25 @@ referência que permitam confirmar a regra exata (ver seção 7 de
 13. Carrinho de venda: um único vendedor por venda, resolvido a partir do
     funcionário vinculado ao usuário logado — se não houver vínculo, a
     tela de Venda mostra aviso e não deixa iniciar.
+14. Juros e multa (RN-FIN-002/003): multa fixa de 2% + juros de 0,033%/dia
+    (~1% ao mês) sobre o valor da parcela, aplicados apenas quando a data de
+    baixa é posterior ao vencimento (`FinanceiroService.CalcularEncargos`).
+    Não há, ainda, SQL exata do sistema de referência para confirmar esses
+    percentuais — ajustar quando essa informação existir.
+15. Intervalo entre parcelas de uma venda a prazo: fixo em 30 dias
+    (`VendaService.FinalizarVendaAsync` chama `GeradorDocumentoFinanceiro`
+    com `intervaloDias = 30`), já que a condição de pagamento
+    (`cad_condicao_pagamento`) ainda não está associada a cada pagamento
+    da venda — apenas o número de parcelas informado pelo operador é usado.
+16. Renegociação de dívida (RN-FIN-004, tabela `crb_renegociacao`) e contas
+    a pagar (fornecedores) não foram implementadas na Fase 7 — a tela
+    "Financeiro" cobre somente contas a receber geradas por venda.
+17. Caixa: assume-se um único caixa aberto por filial por vez
+    (`ICaixaRepository.ObterAbertoAsync`) — múltiplos caixas simultâneos
+    (um por operador/PDV) não foram implementados. A conferência de caixa
+    por forma de pagamento (`cx_conferencia`) tem tabela no schema mas
+    ainda não tem tela; o fechamento registra apenas o valor total apurado
+    informado pelo operador contra o saldo calculado.
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas

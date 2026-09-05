@@ -1,10 +1,17 @@
 using GestorPDV.Application.Cadastros;
+using GestorPDV.Application.Caixa;
 using GestorPDV.Application.Common;
 using GestorPDV.Application.Estoque;
+using GestorPDV.Application.Financeiro;
 using GestorPDV.Application.Vendas;
+using GestorPDV.Domain.Cadastros;
+using GestorPDV.Domain.Caixa;
 using GestorPDV.Domain.Estoque;
 using GestorPDV.Domain.Vendas;
 using GestorPDV.Vendas.Calculos;
+// Alias necessário: mesma convenção adotada em ICaixaRepository/CaixaService
+// para evitar qualquer ambiguidade com os namespaces "...Caixa".
+using CaixaEntidade = GestorPDV.Domain.Caixa.Caixa;
 
 namespace GestorPDV.Vendas.Servicos;
 
@@ -12,8 +19,13 @@ public class VendaService : IVendaService
 {
     private readonly IVendaRepository _vendaRepository;
     private readonly IEstoqueService _estoqueService;
+    private readonly ICaixaRepository _caixaRepository;
+    private readonly IFinanceiroRepository _financeiroRepository;
+    private readonly IFinanceiroService _financeiroService;
     private readonly IProdutoRepository _produtoRepository;
     private readonly IServicoRepository _servicoRepository;
+    private readonly IClienteRepository _clienteRepository;
+    private readonly IFormaPagamentoRepository _formaPagamentoRepository;
     private readonly ITabelaPrecoRepository _tabelaPrecoRepository;
     private readonly IFuncionarioRepository _funcionarioRepository;
     private readonly IComissaoRepository _comissaoRepository;
@@ -22,8 +34,13 @@ public class VendaService : IVendaService
     public VendaService(
         IVendaRepository vendaRepository,
         IEstoqueService estoqueService,
+        ICaixaRepository caixaRepository,
+        IFinanceiroRepository financeiroRepository,
+        IFinanceiroService financeiroService,
         IProdutoRepository produtoRepository,
         IServicoRepository servicoRepository,
+        IClienteRepository clienteRepository,
+        IFormaPagamentoRepository formaPagamentoRepository,
         ITabelaPrecoRepository tabelaPrecoRepository,
         IFuncionarioRepository funcionarioRepository,
         IComissaoRepository comissaoRepository,
@@ -31,8 +48,13 @@ public class VendaService : IVendaService
     {
         _vendaRepository = vendaRepository;
         _estoqueService = estoqueService;
+        _caixaRepository = caixaRepository;
+        _financeiroRepository = financeiroRepository;
+        _financeiroService = financeiroService;
         _produtoRepository = produtoRepository;
         _servicoRepository = servicoRepository;
+        _clienteRepository = clienteRepository;
+        _formaPagamentoRepository = formaPagamentoRepository;
         _tabelaPrecoRepository = tabelaPrecoRepository;
         _funcionarioRepository = funcionarioRepository;
         _comissaoRepository = comissaoRepository;
@@ -145,21 +167,79 @@ public class VendaService : IVendaService
     }
 
     public async Task<Result<long>> FinalizarVendaAsync(
-        Venda venda, long formaPagamentoId, CancellationToken cancellationToken = default)
+        Venda venda, IReadOnlyList<VendaPagamento> pagamentos, CancellationToken cancellationToken = default)
     {
         if (venda.Itens.Count == 0)
         {
             return Result<long>.Falha("Inclua ao menos um item antes de finalizar a venda.");
         }
 
-        venda.Pagamentos.Clear();
-        venda.Pagamentos.Add(new VendaPagamento
+        if (pagamentos.Count == 0)
         {
-            FormaPagamentoId = formaPagamentoId,
-            Valor = venda.Total,
-            Parcelas = 1,
-            Status = StatusVendaPagamento.Confirmado
-        });
+            return Result<long>.Falha("Informe ao menos uma forma de pagamento.");
+        }
+
+        var somaPagamentos = pagamentos.Sum(p => p.Valor);
+        if (Math.Abs(somaPagamentos - venda.Total) > 0.01m)
+        {
+            return Result<long>.Falha(
+                $"A soma dos pagamentos ({somaPagamentos:C}) não confere com o total da venda ({venda.Total:C}).");
+        }
+
+        // Resolve as formas de pagamento antes de abrir a transação, para
+        // validar RN-PAG-001/RN-CLI-001 com uma mensagem clara.
+        var formasPorId = new Dictionary<long, FormaPagamento>();
+        foreach (var pagamento in pagamentos)
+        {
+            if (!formasPorId.ContainsKey(pagamento.FormaPagamentoId))
+            {
+                var forma = await _formaPagamentoRepository.ObterPorIdAsync(pagamento.FormaPagamentoId, cancellationToken);
+                if (forma is null)
+                {
+                    return Result<long>.Falha("Forma de pagamento inválida.");
+                }
+
+                formasPorId[pagamento.FormaPagamentoId] = forma;
+            }
+        }
+
+        var exigeCliente = pagamentos.Any(p => formasPorId[p.FormaPagamentoId].GeraFinanceiro);
+        if (exigeCliente)
+        {
+            if (!venda.ClienteId.HasValue)
+            {
+                return Result<long>.Falha("Venda a prazo (crediário/boleto) exige um cliente informado.");
+            }
+
+            var cliente = await _clienteRepository.ObterPorIdAsync(venda.ClienteId.Value, cancellationToken);
+            if (cliente is null)
+            {
+                return Result<long>.Falha("Cliente não encontrado.");
+            }
+
+            var bloqueio = await _financeiroService.VerificarBloqueioClienteAsync(
+                cliente.Id, cliente.BloquearVendaDiasVencido, cancellationToken);
+            if (!bloqueio.Sucesso)
+            {
+                return Result<long>.Falha(bloqueio.Erro!);
+            }
+        }
+
+        CaixaEntidade? caixaAberto = null;
+        if (pagamentos.Any(p => formasPorId[p.FormaPagamentoId].MovimentaCaixa))
+        {
+            caixaAberto = await _caixaRepository.ObterAbertoAsync(venda.FilialId, cancellationToken);
+            if (caixaAberto is null)
+            {
+                return Result<long>.Falha("Não há caixa aberto para esta filial. Abra o caixa antes de finalizar a venda.");
+            }
+        }
+
+        venda.Pagamentos.Clear();
+        foreach (var pagamento in pagamentos)
+        {
+            venda.Pagamentos.Add(pagamento);
+        }
         venda.Status = StatusVenda.Finalizada;
 
         await using var unitOfWork = _unitOfWorkFactory.Criar();
@@ -177,6 +257,31 @@ public class VendaService : IVendaService
                     await _estoqueService.BaixarEstoqueAsync(
                         produto, venda.FilialId, item.Quantidade, OrigemMovimentacaoEstoque.Venda,
                         "mv_venda", venda.Id, venda.UsuarioAberturaId, unitOfWork, cancellationToken);
+                }
+            }
+
+            foreach (var pagamento in venda.Pagamentos)
+            {
+                var forma = formasPorId[pagamento.FormaPagamentoId];
+
+                if (forma.MovimentaCaixa && caixaAberto is not null)
+                {
+                    await _caixaRepository.RegistrarMovimentoAsync(
+                        caixaAberto.Id, TipoMovimentoCaixa.Venda, forma.Id, pagamento.Valor, venda.UsuarioAberturaId,
+                        "mv_venda", venda.Id, null, unitOfWork, cancellationToken);
+                }
+
+                if (forma.GeraFinanceiro)
+                {
+                    // RN-FIN-001: uma parcela por forma de pagamento "a
+                    // prazo" na venda; condição de pagamento define o
+                    // intervalo entre parcelas quando o pagamento tem mais
+                    // de uma (padrão de 30 dias quando não informada).
+                    var documento = GeradorDocumentoFinanceiro.Gerar(
+                        venda.ClienteId!.Value, venda.FilialId, venda.Id, pagamento.Valor,
+                        Math.Max(pagamento.Parcelas, 1), 30, DateOnly.FromDateTime(DateTime.Now).AddDays(30));
+
+                    await _financeiroRepository.GerarDocumentoAsync(documento, unitOfWork, cancellationToken);
                 }
             }
 
@@ -203,6 +308,8 @@ public class VendaService : IVendaService
         {
             await _vendaRepository.CancelarAsync(vendaId, usuarioId, motivo, unitOfWork, cancellationToken);
             await _estoqueService.EstornarAsync("mv_venda", vendaId, usuarioId, unitOfWork, cancellationToken);
+            await _caixaRepository.EstornarMovimentosPorDocumentoAsync("mv_venda", vendaId, usuarioId, unitOfWork, cancellationToken);
+            await _financeiroRepository.CancelarDocumentosPorVendaAsync(vendaId, unitOfWork, cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
             return Result.Ok();
         }

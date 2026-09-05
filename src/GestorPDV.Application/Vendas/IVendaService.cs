@@ -28,8 +28,12 @@ public interface IVendaService
 
     void RemoverItem(Venda venda, int itemNumero);
 
+    // RN-PAG-001: uma venda pode ter múltiplas formas de pagamento; a soma
+    // dos valores deve fechar com venda.Total. Formas que "geram
+    // financeiro" (crediário/boleto) exigem venda.ClienteId e podem gerar
+    // mais de uma parcela (VendaPagamento.Parcelas).
     Task<Result<long>> FinalizarVendaAsync(
-        Venda venda, long formaPagamentoId, CancellationToken cancellationToken = default);
+        Venda venda, IReadOnlyList<VendaPagamento> pagamentos, CancellationToken cancellationToken = default);
 
     Task<Result> CancelarVendaAsync(
         long vendaId, long usuarioId, string motivo, CancellationToken cancellationToken = default);

@@ -114,23 +114,71 @@
                                 </StackPanel>
                             </Grid>
 
-                            <Grid Margin="0,16,0,0">
+                            <TextBlock Text="Cliente (opcional, obrigatório para crediário/boleto)"
+                                       Style="{StaticResource RotuloCampo}" Margin="0,16,0,4" />
+                            <ComboBox ItemsSource="{Binding Clientes}" DisplayMemberPath="Pessoa.Nome"
+                                      SelectedItem="{Binding ClienteSelecionado}" />
+
+                            <TextBlock Text="Pagamentos (RN-PAG-001: podem ser vários, desde que fechem o total)"
+                                       Style="{StaticResource RotuloCampo}" />
+                            <DataGrid Height="110" ItemsSource="{Binding Pagamentos}" SelectedItem="{Binding PagamentoSelecionado}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Forma" Binding="{Binding FormaPagamentoDescricao}" Width="*" />
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat={}{0:N2}}" Width="90" />
+                                    <DataGridTextColumn Header="Parcelas" Binding="{Binding Parcelas}" Width="70" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <Grid Margin="0,8,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Forma de pagamento" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <ComboBox ItemsSource="{Binding FormasPagamento}" DisplayMemberPath="Descricao"
+                                              SelectedItem="{Binding FormaPagamentoParaAdicionar}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Valor (0 = restante)" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding ValorPagamentoParaAdicionar, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="Parcelas" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding ParcelasPagamentoParaAdicionar, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Adicionar pagamento" Command="{Binding AdicionarPagamentoCommand}" Padding="10,4" Margin="0,0,8,0" />
+                                <Button Content="Remover pagamento selecionado" Command="{Binding RemoverPagamentoCommand}" Padding="10,4" />
+                            </StackPanel>
+
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Cliente (opcional)" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
-                                    <ComboBox ItemsSource="{Binding Clientes}" DisplayMemberPath="Pessoa.Nome"
-                                              SelectedItem="{Binding ClienteSelecionado}" />
+                                    <TextBlock Text="Subtotal" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding Subtotal, StringFormat={}{0:C}}" FontSize="16" FontWeight="Bold" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Desconto" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding DescontoTotal, StringFormat={}{0:C}}" FontSize="16" FontWeight="Bold" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Forma de pagamento" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
-                                    <ComboBox ItemsSource="{Binding FormasPagamento}" DisplayMemberPath="Descricao"
-                                              SelectedItem="{Binding FormaPagamentoSelecionada}" />
+                                    <TextBlock Text="Total" Style="{StaticResource RotuloCampo}" Margin="0" />
+                                    <TextBlock Text="{Binding Total, StringFormat={}{0:C}}" FontSize="20" FontWeight="Bold" Foreground="#2563EB" />
                                 </StackPanel>
                             </Grid>
+
+                            <TextBlock Margin="0,4,0,0" FontWeight="Bold">
+                                <Run Text="Restante a pagar: " /><Run Text="{Binding RestanteAPagar, StringFormat={}{0:C}, Mode=OneWay}" />
+                            </TextBlock>
 
                             <Button Content="Finalizar venda" Style="{StaticResource BotaoPrimario}"
                                     Command="{Binding FinalizarCommand}" Margin="0,16,0,0" Padding="14,10" FontSize="14" />

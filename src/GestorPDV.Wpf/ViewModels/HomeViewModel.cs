@@ -17,9 +17,13 @@ public class HomeViewModel : ObservableObject
     // RN-SEG-001: bloqueio de ações/botões conforme a permissão do usuário.
     public bool PodeGerenciarCadastros => Sessao.TemPermissao("CADASTRO_GERENCIAR");
     public bool PodeVender => Sessao.TemPermissao("VENDA_INCLUIR");
+    public bool PodeAbrirCaixa => Sessao.TemPermissao("CAIXA_ABRIR");
+    public bool PodeBaixarFinanceiro => Sessao.TemPermissao("FINANCEIRO_BAIXAR");
 
     public ICommand AbrirCadastrosCommand { get; }
     public ICommand AbrirVendaCommand { get; }
+    public ICommand AbrirCaixaCommand { get; }
+    public ICommand AbrirFinanceiroCommand { get; }
     public ICommand SairCommand { get; }
 
     public HomeViewModel(SessaoUsuario sessao, ShellViewModel shell)
@@ -28,6 +32,8 @@ public class HomeViewModel : ObservableObject
         _shell = shell;
         AbrirCadastrosCommand = new RelayCommand(() => _shell.NavigateToCadastrosMenu(Sessao));
         AbrirVendaCommand = new RelayCommand(() => _shell.NavigateToVenda(Sessao));
+        AbrirCaixaCommand = new RelayCommand(() => _shell.NavigateToCaixa(Sessao));
+        AbrirFinanceiroCommand = new RelayCommand(() => _shell.NavigateToFinanceiro(Sessao));
         SairCommand = new RelayCommand(() => _shell.NavigateToLogin());
     }
 }

@@ -17,6 +17,7 @@
     <ProjectReference Include="..\GestorPDV.Data.Postgres\GestorPDV.Data.Postgres.csproj" />
     <ProjectReference Include="..\GestorPDV.Estoque\GestorPDV.Estoque.csproj" />
     <ProjectReference Include="..\GestorPDV.Vendas\GestorPDV.Vendas.csproj" />
+    <ProjectReference Include="..\GestorPDV.Financeiro\GestorPDV.Financeiro.csproj" />
   </ItemGroup>
 
 </Project>

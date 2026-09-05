@@ -1,0 +1,105 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Caixa.CaixaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Caixa" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Atualizar" Command="{Binding AtualizarCommand}" Padding="12,6" Margin="0,0,8,0" />
+                <Button Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="16" CornerRadius="6" Background="White"
+                        BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Situação" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding StatusTexto}" FontSize="16" FontWeight="Bold" Foreground="#1F2937" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Saldo atual" Style="{StaticResource RotuloCampo}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding SaldoAtual, StringFormat=C}" FontSize="18" FontWeight="Bold" Foreground="#059669" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Movimentos}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Data" Binding="{Binding DataMovimento, StringFormat='dd/MM/yyyy HH:mm'}" Width="140" />
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="110" />
+                        <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat=C}" Width="110" />
+                        <DataGridTextColumn Header="Documento" Binding="{Binding DocumentoReferenciaTipo}" Width="100" />
+                        <DataGridTextColumn Header="Observação" Binding="{Binding Observacao}" Width="*" />
+                        <DataGridCheckBoxColumn Header="Estornado" Binding="{Binding Estornado}" Width="70" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <StackPanel Visibility="{Binding CaixaFechado, Converter={StaticResource BoolParaVisibilidade}}">
+                            <TextBlock Text="Abrir caixa" FontWeight="Bold" Foreground="#1F2937" />
+                            <TextBlock Text="Valor de abertura" Style="{StaticResource RotuloCampo}" />
+                            <TextBox Text="{Binding ValorAbertura, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Content="Abrir caixa" Style="{StaticResource BotaoPrimario}"
+                                    Command="{Binding AbrirCaixaCommand}" Margin="0,12,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Visibility="{Binding CaixaAberto, Converter={StaticResource BoolParaVisibilidade}}">
+                            <TextBlock Text="Sangria / suprimento" FontWeight="Bold" Foreground="#1F2937" />
+                            <TextBlock Text="Valor" Style="{StaticResource RotuloCampo}" />
+                            <TextBox Text="{Binding ValorSangriaSuprimento, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Observação" Style="{StaticResource RotuloCampo}" />
+                            <TextBox Text="{Binding ObservacaoSangriaSuprimento, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Content="Sangria" Command="{Binding RegistrarSangriaCommand}" Padding="10,6" Margin="0,0,8,0" />
+                                <Button Content="Suprimento" Command="{Binding RegistrarSuprimentoCommand}" Padding="10,6" />
+                            </StackPanel>
+
+                            <Separator Margin="0,20,0,20" />
+
+                            <TextBlock Text="Fechar caixa" FontWeight="Bold" Foreground="#1F2937" />
+                            <TextBlock Text="Valor apurado (dinheiro em caixa)" Style="{StaticResource RotuloCampo}" />
+                            <TextBox Text="{Binding ValorFechamentoInformado, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Content="Fechar caixa" Style="{StaticResource BotaoPrimario}"
+                                    Command="{Binding FecharCaixaCommand}" Margin="0,12,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding Mensagem}" TextWrapping="Wrap" Foreground="#2563EB" Margin="0,16,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

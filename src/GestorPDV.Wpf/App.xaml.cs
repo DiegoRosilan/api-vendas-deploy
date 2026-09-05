@@ -1,9 +1,11 @@
 using System.IO;
 using System.Windows;
 using GestorPDV.Application.Seguranca;
+using GestorPDV.Caixa.Servicos;
 using GestorPDV.Data.Postgres;
 using GestorPDV.Data.Postgres.Repositories;
 using GestorPDV.Estoque.Servicos;
+using GestorPDV.Financeiro.Servicos;
 using GestorPDV.Infrastructure.Configuration;
 using GestorPDV.Infrastructure.Database;
 using GestorPDV.Infrastructure.Security;
@@ -36,30 +38,43 @@ public partial class App : Application
 
         var produtoRepository = new ProdutoRepository(connectionFactory);
         var servicoRepository = new ServicoRepository(connectionFactory);
+        var clienteRepository = new ClienteRepository(connectionFactory);
         var tabelaPrecoRepository = new TabelaPrecoRepository(connectionFactory);
         var funcionarioRepository = new FuncionarioRepository(connectionFactory);
+        var formaPagamentoRepository = new FormaPagamentoRepository(connectionFactory);
 
         var cadastroRepositorios = new CadastroRepositorios(
             produtos: produtoRepository,
             servicos: servicoRepository,
-            clientes: new ClienteRepository(connectionFactory),
+            clientes: clienteRepository,
             fornecedores: new FornecedorRepository(connectionFactory),
             funcionarios: funcionarioRepository,
             filiais: new FilialRepository(connectionFactory),
-            formasPagamento: new FormaPagamentoRepository(connectionFactory),
+            formasPagamento: formaPagamentoRepository,
             condicoesPagamento: new CondicaoPagamentoRepository(connectionFactory),
             tabelasPreco: tabelaPrecoRepository);
 
         var unitOfWorkFactory = new NpgsqlUnitOfWorkFactory(connectionFactory);
         var estoqueService = new EstoqueService(new EstoqueRepository(connectionFactory));
+
+        var caixaRepository = new CaixaRepository(connectionFactory);
+        var caixaService = new CaixaService(caixaRepository);
+        var caixaContexto = new CaixaContexto(caixaService, caixaRepository);
+
+        var financeiroRepository = new FinanceiroRepository(connectionFactory);
+        var financeiroService = new FinanceiroService(financeiroRepository, unitOfWorkFactory);
+        var financeiroContexto = new FinanceiroContexto(financeiroService, financeiroRepository);
+
         var vendaRepository = new VendaRepository(connectionFactory);
         var comissaoRepository = new ComissaoRepository(connectionFactory);
         var vendaService = new VendaService(
-            vendaRepository, estoqueService, produtoRepository, servicoRepository, tabelaPrecoRepository,
+            vendaRepository, estoqueService, caixaRepository, financeiroRepository, financeiroService,
+            produtoRepository, servicoRepository, clienteRepository, formaPagamentoRepository, tabelaPrecoRepository,
             funcionarioRepository, comissaoRepository, unitOfWorkFactory);
         var vendaContexto = new VendaContexto(vendaService, vendaRepository);
 
-        var shellViewModel = new ShellViewModel(databaseInitializer, autenticacaoService, cadastroRepositorios, vendaContexto);
+        var shellViewModel = new ShellViewModel(
+            databaseInitializer, autenticacaoService, cadastroRepositorios, vendaContexto, caixaContexto, financeiroContexto);
 
         var mainWindow = new MainWindow { DataContext = shellViewModel };
         MainWindow = mainWindow;

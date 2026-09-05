@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using GestorPDV.Application.Cadastros;
+using GestorPDV.Application.Caixa;
 using GestorPDV.Application.Seguranca;
 using GestorPDV.Application.Vendas;
 using GestorPDV.Domain.Cadastros;
@@ -20,25 +21,35 @@ public class ItemCarrinhoExibicao
     public decimal Total { get; init; }
 }
 
-// Tela de venda (PDV): monta o carrinho em memória via IVendaService e só
-// grava no banco ao finalizar. RemoverItem/AdicionarItem recalculam os
-// totais a cada mudança (RN-VEN-002/003/004).
+public class PagamentoExibicao
+{
+    public string FormaPagamentoDescricao { get; init; } = string.Empty;
+    public decimal Valor { get; init; }
+    public int Parcelas { get; init; }
+}
+
+// Tela de venda (PDV): monta o carrinho e os pagamentos em memória via
+// IVendaService e só grava no banco ao finalizar. RN-PAG-001: a venda pode
+// ter mais de uma forma de pagamento, desde que a soma feche com o total.
 public class VendaViewModel : CadastroViewModelBase
 {
     private readonly IVendaService _vendaService;
     private readonly IVendaRepository _vendaRepository;
+    private readonly ICaixaRepository _caixaRepository;
     private readonly IProdutoRepository _produtoRepository;
     private readonly IServicoRepository _servicoRepository;
     private readonly IClienteRepository _clienteRepository;
     private readonly IFormaPagamentoRepository _formaPagamentoRepository;
     private readonly IFuncionarioRepository _funcionarioRepository;
     private readonly Dictionary<VendaProduto, string> _descricoesPorItem = new();
+    private readonly List<VendaPagamento> _pagamentosPendentes = new();
 
     public ObservableCollection<Produto> ResultadosBusca { get; } = new();
     public ObservableCollection<Servico> Servicos { get; } = new();
     public ObservableCollection<Cliente> Clientes { get; } = new();
     public ObservableCollection<FormaPagamento> FormasPagamento { get; } = new();
     public ObservableCollection<ItemCarrinhoExibicao> Itens { get; } = new();
+    public ObservableCollection<PagamentoExibicao> Pagamentos { get; } = new();
     public ObservableCollection<Venda> VendasDeHoje { get; } = new();
 
     private Venda? _venda;
@@ -46,6 +57,13 @@ public class VendaViewModel : CadastroViewModelBase
     {
         get => _venda;
         private set => SetField(ref _venda, value);
+    }
+
+    private bool _caixaAberto;
+    public bool CaixaAberto
+    {
+        get => _caixaAberto;
+        private set => SetField(ref _caixaAberto, value);
     }
 
     private string? _termoBusca;
@@ -97,11 +115,25 @@ public class VendaViewModel : CadastroViewModelBase
         }
     }
 
-    private FormaPagamento? _formaPagamentoSelecionada;
-    public FormaPagamento? FormaPagamentoSelecionada
+    private FormaPagamento? _formaPagamentoParaAdicionar;
+    public FormaPagamento? FormaPagamentoParaAdicionar
     {
-        get => _formaPagamentoSelecionada;
-        set => SetField(ref _formaPagamentoSelecionada, value);
+        get => _formaPagamentoParaAdicionar;
+        set => SetField(ref _formaPagamentoParaAdicionar, value);
+    }
+
+    private decimal _valorPagamentoParaAdicionar;
+    public decimal ValorPagamentoParaAdicionar
+    {
+        get => _valorPagamentoParaAdicionar;
+        set => SetField(ref _valorPagamentoParaAdicionar, value);
+    }
+
+    private int _parcelasPagamentoParaAdicionar = 1;
+    public int ParcelasPagamentoParaAdicionar
+    {
+        get => _parcelasPagamentoParaAdicionar;
+        set => SetField(ref _parcelasPagamentoParaAdicionar, value);
     }
 
     private ItemCarrinhoExibicao? _itemCarrinhoSelecionado;
@@ -109,6 +141,13 @@ public class VendaViewModel : CadastroViewModelBase
     {
         get => _itemCarrinhoSelecionado;
         set => SetField(ref _itemCarrinhoSelecionado, value);
+    }
+
+    private PagamentoExibicao? _pagamentoSelecionado;
+    public PagamentoExibicao? PagamentoSelecionado
+    {
+        get => _pagamentoSelecionado;
+        set => SetField(ref _pagamentoSelecionado, value);
     }
 
     private Venda? _vendaHistoricoSelecionada;
@@ -121,6 +160,8 @@ public class VendaViewModel : CadastroViewModelBase
     public decimal Subtotal => Venda?.Subtotal ?? 0;
     public decimal DescontoTotal => Venda?.Desconto ?? 0;
     public decimal Total => Venda?.Total ?? 0;
+    public decimal TotalPago => _pagamentosPendentes.Sum(p => p.Valor);
+    public decimal RestanteAPagar => Total - TotalPago;
 
     // RN-SEG-001: bloqueio de ações conforme permissão.
     public bool PodeAutorizarDesconto => Sessao.TemPermissao("VENDA_AUTORIZAR_DESCONTO");
@@ -130,12 +171,15 @@ public class VendaViewModel : CadastroViewModelBase
     public ICommand AdicionarProdutoCommand { get; }
     public ICommand AdicionarServicoCommand { get; }
     public ICommand RemoverItemCommand { get; }
+    public ICommand AdicionarPagamentoCommand { get; }
+    public ICommand RemoverPagamentoCommand { get; }
     public ICommand FinalizarCommand { get; }
     public ICommand CancelarVendaSelecionadaCommand { get; }
 
     public VendaViewModel(
         IVendaService vendaService,
         IVendaRepository vendaRepository,
+        ICaixaRepository caixaRepository,
         IProdutoRepository produtoRepository,
         IServicoRepository servicoRepository,
         IClienteRepository clienteRepository,
@@ -147,6 +191,7 @@ public class VendaViewModel : CadastroViewModelBase
     {
         _vendaService = vendaService;
         _vendaRepository = vendaRepository;
+        _caixaRepository = caixaRepository;
         _produtoRepository = produtoRepository;
         _servicoRepository = servicoRepository;
         _clienteRepository = clienteRepository;
@@ -157,7 +202,10 @@ public class VendaViewModel : CadastroViewModelBase
         AdicionarProdutoCommand = new RelayCommand(AdicionarProdutoAsync, () => ProdutoSelecionado is not null && Venda is not null);
         AdicionarServicoCommand = new RelayCommand(AdicionarServicoAsync, () => ServicoSelecionado is not null && Venda is not null);
         RemoverItemCommand = new RelayCommand(RemoverItemSelecionado, () => ItemCarrinhoSelecionado is not null);
-        FinalizarCommand = new RelayCommand(FinalizarAsync, () => Venda is { Itens.Count: > 0 } && FormaPagamentoSelecionada is not null);
+        AdicionarPagamentoCommand = new RelayCommand(AdicionarPagamento, () => FormaPagamentoParaAdicionar is not null);
+        RemoverPagamentoCommand = new RelayCommand(RemoverPagamentoSelecionado, () => PagamentoSelecionado is not null);
+        FinalizarCommand = new RelayCommand(
+            FinalizarAsync, () => Venda is { Itens.Count: > 0 } && _pagamentosPendentes.Count > 0 && RestanteAPagar == 0);
         CancelarVendaSelecionadaCommand = new RelayCommand(CancelarVendaSelecionadaAsync, () => VendaHistoricoSelecionada is not null);
 
         _ = InicializarAsync();
@@ -184,6 +232,13 @@ public class VendaViewModel : CadastroViewModelBase
             }
 
             Venda = _vendaService.IniciarVenda(Sessao.FilialId.Value, funcionarioVendedor.Id, Sessao.UsuarioId, null, null);
+
+            var caixaAberto = await _caixaRepository.ObterAbertoAsync(Sessao.FilialId.Value);
+            CaixaAberto = caixaAberto is not null;
+            if (!CaixaAberto)
+            {
+                Mensagem = "Não há caixa aberto para esta filial. Abra o caixa (menu Caixa) antes de vender.";
+            }
 
             var clientes = await _clienteRepository.ListarAsync(null);
             Clientes.Clear();
@@ -308,9 +363,60 @@ public class VendaViewModel : CadastroViewModelBase
         AtualizarItens();
     }
 
+    private void AdicionarPagamento()
+    {
+        if (FormaPagamentoParaAdicionar is null)
+        {
+            return;
+        }
+
+        var valor = ValorPagamentoParaAdicionar > 0 ? ValorPagamentoParaAdicionar : RestanteAPagar;
+        if (valor <= 0)
+        {
+            Mensagem = "Não há valor restante para pagar.";
+            return;
+        }
+
+        _pagamentosPendentes.Add(new VendaPagamento
+        {
+            FormaPagamentoId = FormaPagamentoParaAdicionar.Id,
+            Valor = valor,
+            Parcelas = Math.Max(ParcelasPagamentoParaAdicionar, 1)
+        });
+
+        Pagamentos.Add(new PagamentoExibicao
+        {
+            FormaPagamentoDescricao = FormaPagamentoParaAdicionar.Descricao,
+            Valor = valor,
+            Parcelas = Math.Max(ParcelasPagamentoParaAdicionar, 1)
+        });
+
+        ValorPagamentoParaAdicionar = 0;
+        ParcelasPagamentoParaAdicionar = 1;
+        NotificarTotaisPagamento();
+    }
+
+    private void RemoverPagamentoSelecionado()
+    {
+        if (PagamentoSelecionado is null)
+        {
+            return;
+        }
+
+        var indice = Pagamentos.IndexOf(PagamentoSelecionado);
+        if (indice >= 0)
+        {
+            Pagamentos.RemoveAt(indice);
+            _pagamentosPendentes.RemoveAt(indice);
+        }
+
+        PagamentoSelecionado = null;
+        NotificarTotaisPagamento();
+    }
+
     private async Task FinalizarAsync()
     {
-        if (Venda is null || FormaPagamentoSelecionada is null)
+        if (Venda is null || _pagamentosPendentes.Count == 0)
         {
             return;
         }
@@ -319,7 +425,7 @@ public class VendaViewModel : CadastroViewModelBase
         Carregando = true;
         try
         {
-            var resultado = await _vendaService.FinalizarVendaAsync(Venda, FormaPagamentoSelecionada.Id);
+            var resultado = await _vendaService.FinalizarVendaAsync(Venda, _pagamentosPendentes);
 
             if (!resultado.Sucesso)
             {
@@ -347,6 +453,8 @@ public class VendaViewModel : CadastroViewModelBase
         Venda = _vendaService.IniciarVenda(
             Sessao.FilialId.Value, Venda.VendedorId, Sessao.UsuarioId, ClienteSelecionado?.Id, ClienteSelecionado?.TabelaPrecoId);
         _descricoesPorItem.Clear();
+        _pagamentosPendentes.Clear();
+        Pagamentos.Clear();
         ResultadosBusca.Clear();
         ProdutoSelecionado = null;
         ServicoSelecionado = null;
@@ -413,8 +521,15 @@ public class VendaViewModel : CadastroViewModelBase
             }
         }
 
+        NotificarTotaisPagamento();
+    }
+
+    private void NotificarTotaisPagamento()
+    {
         OnPropertyChanged(nameof(Subtotal));
         OnPropertyChanged(nameof(DescontoTotal));
         OnPropertyChanged(nameof(Total));
+        OnPropertyChanged(nameof(TotalPago));
+        OnPropertyChanged(nameof(RestanteAPagar));
     }
 }

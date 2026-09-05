@@ -1,0 +1,75 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Financeiro.FinanceiroView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Contas a receber" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Atualizar" Command="{Binding AtualizarCommand}" Padding="12,6" Margin="0,0,8,0" />
+                <Button Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid Grid.Column="0" ItemsSource="{Binding Parcelas}" SelectedItem="{Binding ParcelaSelecionada}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Cliente" Binding="{Binding ClienteNome}" Width="1.4*" />
+                    <DataGridTextColumn Header="Documento" Binding="{Binding NumeroDocumento}" Width="100" />
+                    <DataGridTextColumn Header="Parc." Binding="{Binding NumeroParcela}" Width="50" />
+                    <DataGridTextColumn Header="Vencimento" Binding="{Binding Vencimento, StringFormat='dd/MM/yyyy'}" Width="100" />
+                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor, StringFormat=C}" Width="100" />
+                    <DataGridTextColumn Header="Dias atraso" Binding="{Binding DiasAtraso}" Width="80" />
+                    <DataGridTextColumn Header="Juros" Binding="{Binding Juros, StringFormat=C}" Width="90" />
+                    <DataGridTextColumn Header="Multa" Binding="{Binding Multa, StringFormat=C}" Width="90" />
+                    <DataGridTextColumn Header="Total atualizado" Binding="{Binding ValorAtualizado, StringFormat=C}" Width="110" />
+                    <DataGridTextColumn Header="Situação" Binding="{Binding Situacao}" Width="80" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Column="2" Padding="16" CornerRadius="6" Background="White"
+                    BorderBrush="#E5E7EB" BorderThickness="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Baixar parcela" FontWeight="Bold" Foreground="#1F2937" />
+
+                        <TextBlock Text="Parcela selecionada" Style="{StaticResource RotuloCampo}" />
+                        <TextBlock TextWrapping="Wrap" Foreground="#374151">
+                            <Run Text="{Binding ParcelaSelecionada.ClienteNome, Mode=OneWay, TargetNullValue='(nenhuma)'}" />
+                            <LineBreak />
+                            <Run Text="Doc. " /><Run Text="{Binding ParcelaSelecionada.NumeroDocumento, Mode=OneWay}" />
+                            <Run Text=" parc. " /><Run Text="{Binding ParcelaSelecionada.NumeroParcela, Mode=OneWay}" />
+                        </TextBlock>
+
+                        <TextBlock Text="Valor a pagar (com juros/multa)" Style="{StaticResource RotuloCampo}" />
+                        <TextBlock Text="{Binding ParcelaSelecionada.ValorAtualizado, StringFormat=C, Mode=OneWay}"
+                                   FontSize="16" FontWeight="Bold" Foreground="#059669" />
+
+                        <TextBlock Text="Forma de pagamento" Style="{StaticResource RotuloCampo}" />
+                        <ComboBox ItemsSource="{Binding FormasPagamento}" DisplayMemberPath="Descricao"
+                                  SelectedItem="{Binding FormaPagamentoSelecionada}" />
+
+                        <Button Content="Confirmar baixa" Style="{StaticResource BotaoPrimario}"
+                                Command="{Binding BaixarParcelaCommand}" Margin="0,16,0,0" />
+
+                        <TextBlock Text="{Binding Mensagem}" TextWrapping="Wrap" Foreground="#2563EB" Margin="0,16,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
