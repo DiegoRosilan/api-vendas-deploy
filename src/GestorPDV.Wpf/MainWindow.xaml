@@ -6,11 +6,13 @@
         xmlns:vmv="clr-namespace:GestorPDV.Wpf.ViewModels.Vendas"
         xmlns:vmcx="clr-namespace:GestorPDV.Wpf.ViewModels.Caixa"
         xmlns:vmf="clr-namespace:GestorPDV.Wpf.ViewModels.Financeiro"
+        xmlns:vmr="clr-namespace:GestorPDV.Wpf.ViewModels.Relatorios"
         xmlns:views="clr-namespace:GestorPDV.Wpf.Views"
         xmlns:viewsc="clr-namespace:GestorPDV.Wpf.Views.Cadastros"
         xmlns:viewsv="clr-namespace:GestorPDV.Wpf.Views.Vendas"
         xmlns:viewscx="clr-namespace:GestorPDV.Wpf.Views.Caixa"
         xmlns:viewsf="clr-namespace:GestorPDV.Wpf.Views.Financeiro"
+        xmlns:viewsr="clr-namespace:GestorPDV.Wpf.Views.Relatorios"
         Title="GestorPDV" Height="750" Width="1200" MinHeight="500" MinWidth="900"
         WindowStartupLocation="CenterScreen"
         Background="#F5F6FA">
@@ -68,6 +70,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmf:FinanceiroViewModel}">
             <viewsf:FinanceiroView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmr:RelatoriosViewModel}">
+            <viewsr:RelatoriosView />
         </DataTemplate>
     </Window.Resources>
 

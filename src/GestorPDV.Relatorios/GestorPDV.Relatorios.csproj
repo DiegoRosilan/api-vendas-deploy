@@ -1,6 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <!-- FastReport Open Source (MIT): geração de relatório sem depender de
+         licença comercial. Só exporta para HTML/imagem nativamente; PDF
+         precisa do pacote de export abaixo (plugin oficial). -->
+    <PackageReference Include="FastReport.OpenSource" Version="2026.2.7" />
+    <PackageReference Include="FastReport.OpenSource.Export.PdfSimple" Version="2026.2.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\GestorPDV.Domain\GestorPDV.Domain.csproj" />
     <ProjectReference Include="..\GestorPDV.Application\GestorPDV.Application.csproj" />
   </ItemGroup>

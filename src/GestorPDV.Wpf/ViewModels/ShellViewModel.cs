@@ -1,17 +1,19 @@
 using GestorPDV.Application.Common;
+using GestorPDV.Application.Relatorios;
 using GestorPDV.Application.Seguranca;
 using GestorPDV.Wpf.Helpers;
 using GestorPDV.Wpf.ViewModels.Cadastros;
 using GestorPDV.Wpf.ViewModels.Caixa;
 using GestorPDV.Wpf.ViewModels.Financeiro;
+using GestorPDV.Wpf.ViewModels.Relatorios;
 using GestorPDV.Wpf.ViewModels.Vendas;
 
 namespace GestorPDV.Wpf.ViewModels;
 
 // Controla a navegação entre as telas da aplicação (verificação de banco,
 // login, troca de senha obrigatória, tela inicial pós-login, cadastros,
-// venda, caixa e financeiro). Telas futuras (relatórios, impressão — Fases
-// 8+) serão adicionadas como novos métodos NavigateToXxx aqui.
+// venda, caixa, financeiro e relatórios). Telas futuras (impressão — Fase
+// 9+) serão adicionadas como novos métodos NavigateToXxx aqui.
 public class ShellViewModel : ObservableObject
 {
     private readonly IDatabaseInitializer _databaseInitializer;
@@ -20,6 +22,7 @@ public class ShellViewModel : ObservableObject
     private readonly VendaContexto _vendaContexto;
     private readonly CaixaContexto _caixaContexto;
     private readonly FinanceiroContexto _financeiroContexto;
+    private readonly IRelatorioService _relatorioService;
 
     private object? _currentViewModel;
     public object? CurrentViewModel
@@ -34,7 +37,8 @@ public class ShellViewModel : ObservableObject
         CadastroRepositorios cadastroRepositorios,
         VendaContexto vendaContexto,
         CaixaContexto caixaContexto,
-        FinanceiroContexto financeiroContexto)
+        FinanceiroContexto financeiroContexto,
+        IRelatorioService relatorioService)
     {
         _databaseInitializer = databaseInitializer;
         _autenticacaoService = autenticacaoService;
@@ -42,6 +46,7 @@ public class ShellViewModel : ObservableObject
         _vendaContexto = vendaContexto;
         _caixaContexto = caixaContexto;
         _financeiroContexto = financeiroContexto;
+        _relatorioService = relatorioService;
     }
 
     public async Task IniciarAsync()
@@ -137,4 +142,7 @@ public class ShellViewModel : ObservableObject
             _cadastroRepositorios.FormasPagamento,
             sessao,
             this);
+
+    public void NavigateToRelatorios(SessaoUsuario sessao) =>
+        CurrentViewModel = new RelatoriosViewModel(_relatorioService, sessao, this);
 }

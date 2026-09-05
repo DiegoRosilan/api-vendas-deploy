@@ -4,12 +4,12 @@ ERP/PDV completo para varejo em geral, oficina mecânica, supermercado,
 farmácia, armarinho, bar/restaurante, loja de roupas, indústria e segmentos
 similares — C#, .NET 9, WPF e PostgreSQL.
 
-Este repositório está na **Fase 7** do desenvolvimento (de 11 fases — ver
+Este repositório está na **Fase 8** do desenvolvimento (de 11 fases — ver
 `docs/ROADMAP.md`): análise/arquitetura, banco de dados, estrutura do
-projeto, login, cadastros, vendas e pagamentos (múltiplas formas de
-pagamento por venda, caixa e contas a receber com juros/multa por atraso)
-concluídos. Relatórios, impressão, testes de compilação real e publicação
-são implementados nas próximas fases.
+projeto, login, cadastros, vendas, pagamentos e relatórios (vendas por
+período, estoque atual e contas a receber em aberto, gerados em PDF via
+FastReport.OpenSource) concluídos. Impressão, testes de compilação real
+em Windows e publicação são implementados nas próximas fases.
 
 ## Documentação
 
@@ -77,23 +77,37 @@ ambiente `GESTORPDV_*`.
 
 ## Compilando
 
+Em uma máquina Windows com o SDK instalado, `dotnet build GestorPDV.sln`
+compila a solução inteira, WPF incluído. Fora do Windows, o `.sln` **não**
+compila de uma vez (o `GestorPDV.Wpf.csproj` tem `net9.0-windows` como alvo,
+e o SDK recusa isso fora do Windows) — compile os projetos individualmente,
+o que cobre tudo menos a interface:
+
 ```bash
-# Todos os projetos multiplataforma (não inclui GestorPDV.Wpf fora do Windows)
 dotnet restore GestorPDV.sln
-dotnet build GestorPDV.sln -c Release
+
+# Os 10 projetos que não são WPF + os testes (funciona em qualquer SO):
+for p in Domain Application Infrastructure Data.Postgres Vendas Estoque \
+         Financeiro Caixa Fiscal Relatorios Tests; do
+  dotnet build "src/GestorPDV.$p/GestorPDV.$p.csproj" -c Release
+done
 
 # No Windows, com Visual Studio ou dotnet CLI, compila também a interface WPF:
 dotnet build src/GestorPDV.Wpf/GestorPDV.Wpf.csproj -c Release
 ```
 
-> **Nota sobre este ambiente de desenvolvimento**: o código foi escrito e
-> revisado manualmente (sintaxe, referências entre projetos, GUIDs da
-> solução), mas não pôde ser compilado neste ambiente porque não foi
-> possível instalar o .NET SDK aqui (rede restrita, sem acesso aos
-> instaladores oficiais). A primeira execução de `dotnet build` em uma
-> máquina com o SDK deve ser tratada como parte da **Fase 10 (testes)**:
-> qualquer erro de compilação encontrado deve ser corrigido antes de seguir
-> para as próximas fases.
+> **Nota sobre este ambiente de desenvolvimento**: a partir da Fase 8 este
+> ambiente passou a ter o SDK do .NET disponível (antes não tinha —
+> rede/instaladores bloqueados), então os 10 projetos acima e
+> `GestorPDV.Tests` já são compilados e testados de verdade
+> (`dotnet build`/`dotnet test`, 0 erros, todos os testes passando) a cada
+> fase, e não apenas revisados manualmente. Só `GestorPDV.Wpf` continua sem
+> poder ser compilado até o fim aqui: o código C# das telas compila
+> normalmente, mas a etapa de XAML→BAML do WPF é Windows-only mesmo com
+> `EnableWindowsTargeting=true` — uma limitação conhecida da própria
+> ferramenta, não do código (detalhes em `docs/ARQUITETURA.md`, seção 9).
+> A compilação final do `GestorPDV.Wpf` continua fazendo parte da
+> **Fase 10 (testes)**, mas com muito mais confiança agora.
 
 ## Executando
 

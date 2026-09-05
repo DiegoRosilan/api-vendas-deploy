@@ -81,10 +81,25 @@ do código).
   parcela. `FinanceiroService.CalcularEncargos` (função pura) e o fluxo de
   baixa são testados sem banco em
   `GestorPDV.Tests/Financeiro/FinanceiroServiceTests.cs`.
+- **Fase 8 — Relatórios**: integração com **FastReport.OpenSource**
+  (2026.2.7, MIT) + **FastReport.OpenSource.Export.PdfSimple** —
+  `GestorPDV.Relatorios` monta o relatório programaticamente via API do
+  FastReport (`Report`, `ReportPage`, bandas, `TextObject`) em vez de um
+  arquivo `.frx` feito no designer (ver suposição 18 abaixo), com
+  `RelatorioTabularBuilder` reaproveitado pelos 3 relatórios da fase:
+  vendas por período, estoque atual e contas a receber em aberto (com
+  juros/multa recalculados via `IFinanceiroService.CalcularEncargos`,
+  RN-FIN-002/003). `IRelatorioRepository` (`GestorPDV.Data.Postgres`) lê
+  direto do PostgreSQL com `JOIN` (sem N+1) para nome de
+  cliente/vendedor. `IRelatorioService` devolve os bytes do PDF (não um
+  caminho de arquivo, para ficar testável); a tela "Relatórios"
+  (permissão `RELATORIO_VISUALIZAR`) salva num arquivo temporário e abre
+  no visualizador padrão do sistema operacional — não há preview embutido
+  nem impressão direta ainda (chegam na Fase 9). Testado de ponta a ponta
+  (build+prepare+export) em
+  `GestorPDV.Tests/Relatorios/RelatorioTabularBuilderTests.cs`.
 
 ## Pendentes
-- **Fase 8 — Relatórios**: integração FastReport lendo diretamente do
-  PostgreSQL (vendas, estoque, financeiro, fiscal).
 - **Fase 9 — Impressão**: impressão de cupom/relatórios e tratamento de
   erros de impressora.
 - **Fase 10 — Testes**: compilação real em ambiente com .NET 9 SDK/Visual
@@ -178,6 +193,26 @@ referência que permitam confirmar a regra exata (ver seção 7 de
     por forma de pagamento (`cx_conferencia`) tem tabela no schema mas
     ainda não tem tela; o fechamento registra apenas o valor total apurado
     informado pelo operador contra o saldo calculado.
+18. Relatórios (Fase 8): o FastReport Designer (ferramenta visual de
+    arrastar/soltar campos num `.frx`) não está disponível neste ambiente
+    de desenvolvimento (sem Windows/Visual Studio) — os 3 relatórios foram
+    montados programaticamente via API do FastReport
+    (`RelatorioTabularBuilder`, `GestorPDV.Relatorios`), com layout fixo
+    (uma linha por registro, colunas com largura fixa em centímetros).
+    Revisar/redesenhar visualmente no FastReport Designer quando houver
+    acesso a uma máquina Windows é opcional, não obrigatório — o resultado
+    já é um PDF correto e legível.
+19. Relatórios (Fase 8): só exportação para PDF (via
+    `FastReport.OpenSource.Export.PdfSimple`, plugin oficial da edição
+    Open Source) — não há preview em tela nem impressão direta ainda
+    (chegam na Fase 9). O relatório "fiscal" citado no roteiro original não
+    foi incluído porque o motor tributário (`GestorPDV.Fiscal`) ainda não
+    está implementado; entra quando o Fiscal existir.
+20. Relatório de estoque atual: soma a quantidade de todas as combinações de
+    grade/lote de um produto num único total por produto/filial — não lista
+    saldo por lote/grade individualmente. Só mostra produtos que já têm ao
+    menos um registro em `est_estoque` (produto nunca movimentado não
+    aparece).
 
 Qualquer arquivo adicional do sistema de referência (SQL exato, prints,
 mensagens de erro) enviado posteriormente deve ser usado para corrigir estas

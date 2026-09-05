@@ -33,6 +33,9 @@
                 <Button Content="Financeiro" Command="{Binding AbrirFinanceiroCommand}"
                         Padding="12,6" Margin="0,0,8,0"
                         Visibility="{Binding PodeBaixarFinanceiro, Converter={StaticResource BoolParaVisibilidade}}" />
+                <Button Content="Relatórios" Command="{Binding AbrirRelatoriosCommand}"
+                        Padding="12,6" Margin="0,0,8,0"
+                        Visibility="{Binding PodeVerRelatorios, Converter={StaticResource BoolParaVisibilidade}}" />
                 <Button Content="Cadastros" Command="{Binding AbrirCadastrosCommand}"
                         Padding="12,6" Margin="0,0,8,0"
                         Visibility="{Binding PodeGerenciarCadastros, Converter={StaticResource BoolParaVisibilidade}}" />
@@ -51,6 +54,6 @@
 
         <TextBlock Grid.Row="2" Margin="0,24,0,0" VerticalAlignment="Bottom"
                    Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap"
-                   Text="Fase 7 concluída: pagamentos combinados na venda, caixa (abertura, sangria, suprimento e fechamento) e contas a receber com cálculo de juros/multa por atraso. Relatórios e impressão chegam nas próximas fases." />
+                   Text="Fase 8 concluída: relatórios de vendas por período, estoque atual e contas a receber em aberto, gerados em PDF via FastReport. Impressão de cupom e tratamento de erros de impressora chegam na próxima fase." />
     </Grid>
 </UserControl>

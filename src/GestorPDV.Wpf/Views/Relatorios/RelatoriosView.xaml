@@ -1,0 +1,57 @@
+<UserControl x:Class="GestorPDV.Wpf.Views.Relatorios.RelatoriosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Relatórios" FontSize="22" FontWeight="Bold" Foreground="#1F2937" />
+            <Button Grid.Column="1" Content="Voltar" Command="{Binding VoltarCommand}" Padding="12,6" />
+        </Grid>
+
+        <StackPanel Grid.Row="1">
+            <Border Padding="16" CornerRadius="6" Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Vendas por período" FontWeight="Bold" Foreground="#1F2937" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="De" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <DatePicker SelectedDate="{Binding DataInicioVendas, Converter={StaticResource DateOnlyParaDateTime}}" Width="130" />
+                        <TextBlock Text="até" VerticalAlignment="Center" Margin="12,0,8,0" />
+                        <DatePicker SelectedDate="{Binding DataFimVendas, Converter={StaticResource DateOnlyParaDateTime}}" Width="130" />
+                    </StackPanel>
+                    <Button Content="Gerar relatório de vendas (PDF)" Style="{StaticResource BotaoPrimario}"
+                            Command="{Binding GerarRelatorioVendasCommand}" Margin="0,12,0,0" HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16" CornerRadius="6" Background="White" BorderBrush="#E5E7EB" BorderThickness="1"
+                    Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Estoque atual" FontWeight="Bold" Foreground="#1F2937" />
+                    <TextBlock Text="Quantidade e valor de todos os produtos da sua filial." Foreground="#6B7280" Margin="0,4,0,0" />
+                    <Button Content="Gerar relatório de estoque (PDF)" Style="{StaticResource BotaoPrimario}"
+                            Command="{Binding GerarRelatorioEstoqueCommand}" Margin="0,12,0,0" HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <Border Padding="16" CornerRadius="6" Background="White" BorderBrush="#E5E7EB" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Contas a receber em aberto" FontWeight="Bold" Foreground="#1F2937" />
+                    <TextBlock Text="Parcelas em aberto ou parciais, com juros/multa por atraso já calculados." Foreground="#6B7280" Margin="0,4,0,0" />
+                    <Button Content="Gerar relatório de contas a receber (PDF)" Style="{StaticResource BotaoPrimario}"
+                            Command="{Binding GerarRelatorioContasReceberCommand}" Margin="0,12,0,0" HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{Binding Mensagem}" TextWrapping="Wrap" Foreground="#2563EB" Margin="0,16,0,0" />
+        </StackPanel>
+    </Grid>
+</UserControl>

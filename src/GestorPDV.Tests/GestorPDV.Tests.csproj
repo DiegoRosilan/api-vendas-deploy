@@ -18,6 +18,7 @@
     <ProjectReference Include="..\GestorPDV.Estoque\GestorPDV.Estoque.csproj" />
     <ProjectReference Include="..\GestorPDV.Vendas\GestorPDV.Vendas.csproj" />
     <ProjectReference Include="..\GestorPDV.Financeiro\GestorPDV.Financeiro.csproj" />
+    <ProjectReference Include="..\GestorPDV.Relatorios\GestorPDV.Relatorios.csproj" />
   </ItemGroup>
 
 </Project>

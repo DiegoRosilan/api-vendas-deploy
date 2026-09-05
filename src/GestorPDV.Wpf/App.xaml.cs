@@ -9,6 +9,7 @@ using GestorPDV.Financeiro.Servicos;
 using GestorPDV.Infrastructure.Configuration;
 using GestorPDV.Infrastructure.Database;
 using GestorPDV.Infrastructure.Security;
+using GestorPDV.Relatorios.Servicos;
 using GestorPDV.Vendas.Servicos;
 using GestorPDV.Wpf.ViewModels;
 
@@ -79,8 +80,12 @@ public partial class App : System.Windows.Application
             funcionarioRepository, comissaoRepository, unitOfWorkFactory);
         var vendaContexto = new VendaContexto(vendaService, vendaRepository);
 
+        var relatorioRepository = new RelatorioRepository(connectionFactory);
+        var relatorioService = new RelatorioService(relatorioRepository, financeiroService);
+
         var shellViewModel = new ShellViewModel(
-            databaseInitializer, autenticacaoService, cadastroRepositorios, vendaContexto, caixaContexto, financeiroContexto);
+            databaseInitializer, autenticacaoService, cadastroRepositorios, vendaContexto, caixaContexto,
+            financeiroContexto, relatorioService);
 
         var mainWindow = new MainWindow { DataContext = shellViewModel };
         MainWindow = mainWindow;

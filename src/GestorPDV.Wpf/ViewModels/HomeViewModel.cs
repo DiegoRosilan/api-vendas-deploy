@@ -19,11 +19,13 @@ public class HomeViewModel : ObservableObject
     public bool PodeVender => Sessao.TemPermissao("VENDA_INCLUIR");
     public bool PodeAbrirCaixa => Sessao.TemPermissao("CAIXA_ABRIR");
     public bool PodeBaixarFinanceiro => Sessao.TemPermissao("FINANCEIRO_BAIXAR");
+    public bool PodeVerRelatorios => Sessao.TemPermissao("RELATORIO_VISUALIZAR");
 
     public ICommand AbrirCadastrosCommand { get; }
     public ICommand AbrirVendaCommand { get; }
     public ICommand AbrirCaixaCommand { get; }
     public ICommand AbrirFinanceiroCommand { get; }
+    public ICommand AbrirRelatoriosCommand { get; }
     public ICommand SairCommand { get; }
 
     public HomeViewModel(SessaoUsuario sessao, ShellViewModel shell)
@@ -34,6 +36,7 @@ public class HomeViewModel : ObservableObject
         AbrirVendaCommand = new RelayCommand(() => _shell.NavigateToVenda(Sessao));
         AbrirCaixaCommand = new RelayCommand(() => _shell.NavigateToCaixa(Sessao));
         AbrirFinanceiroCommand = new RelayCommand(() => _shell.NavigateToFinanceiro(Sessao));
+        AbrirRelatoriosCommand = new RelayCommand(() => _shell.NavigateToRelatorios(Sessao));
         SairCommand = new RelayCommand(() => _shell.NavigateToLogin());
     }
 }
